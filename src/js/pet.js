@@ -1,8 +1,8 @@
 /**
  * Pet Behavior Engine - Orange Tabby Edition
- * v0.4: Core orchestrator — movement, interaction, intro, health extracted to separate modules
+ * v0.5: Sprite-based animation system, merged health reminders
  *
- * Required load order: personalities.js → growth.js → pet.js → pet-movement.js → pet-interaction.js → pet-intro.js → pet-health.js
+ * Required load order: personalities.js → growth.js → sprite-manager.js → pet.js → pet-movement.js → pet-interaction.js → pet-intro.js → pet-health.js
  */
 
 function pickRandom(arr) {
@@ -16,19 +16,19 @@ class PetEngine {
     this.screenWidth = window.innerWidth;
     this.screenHeight = window.innerHeight;
 
-    // Position
+    // Position (adjusted for larger sprite size 120x140)
     this.x = this.screenWidth * 0.5;
-    this.y = this.screenHeight - 132;
-    this.minX = 70;
-    this.maxX = this.screenWidth - 70;
+    this.y = this.screenHeight - 160;
+    this.minX = 80;
+    this.maxX = this.screenWidth - 80;
     this.minY = 40;
-    this.maxY = this.screenHeight - 132;
+    this.maxY = this.screenHeight - 160;
     this.walkSpeed = 0.14;
     this.verticalSpeed = 0.10;
 
     // State
     this.state = 'idle';
-    this._timers = { state: null, restReminder: null, standReminder: null, waterReminder: null, blink: null, seek: null, timeGreeting: null, reaction: null, mood: null, analytics: null, intro1: null, intro2: null, introHint: null, introText: null, idleAnim: null };
+    this._timers = { state: null, breakReminder: null, waterReminder: null, seek: null, timeGreeting: null, reaction: null, mood: null, analytics: null, intro1: null, intro2: null, introHint: null, introText: null, idleAnim: null };
 
     // Walk direction (for scaleX)
     this._facingLeft = false;
@@ -50,13 +50,18 @@ class PetEngine {
     this.isPoppedIn = false;
 
     // Health reminder intervals (ms)
-    this.restInterval = 45 * 60 * 1000;   // 45 min default
-    this.standInterval = 60 * 60 * 1000;  // 60 min default
+    this.breakInterval = 45 * 60 * 1000;   // 45 min default (combined rest + stand)
     this.waterInterval = 30 * 60 * 1000;  // 30 min default
 
     // Cached DOM refs
     this.bubble = document.getElementById('speech-bubble');
     this.closeBtn = document.getElementById('pet-close');
+
+    // ===== Sprite Manager =====
+    var spriteImg = document.getElementById('pet-sprite');
+    this.sprite = new SpriteManager();
+    this.sprite.bind(spriteImg);
+    this._spritesReady = false;
 
     // ===== Personality =====
     this.personality = 'clingy';
@@ -97,16 +102,21 @@ class PetEngine {
 
     this.bindEvents();
 
-    if (!this.growth.isIntroComplete()) {
-      this._playIntroSequence();
-    } else {
-      this.switchMode('companion');
-      if (this.growth.isNewDay()) {
-        this._setTimer('timeGreeting', () => { this._showMilestoneOrGreeting(); }, 2000);
+    // Preload sprites then start
+    this.sprite.preloadAll().then(() => {
+      this._spritesReady = true;
+
+      if (!this.growth.isIntroComplete()) {
+        this._playIntroSequence();
       } else {
-        this._setTimer('timeGreeting', () => { this._showTimeGreeting(); }, 2000);
+        this.switchMode('companion');
+        if (this.growth.isNewDay()) {
+          this._setTimer('timeGreeting', () => { this._showMilestoneOrGreeting(); }, 2000);
+        } else {
+          this._setTimer('timeGreeting', () => { this._showTimeGreeting(); }, 2000);
+        }
       }
-    }
+    });
   }
 
   // ========== TIMER HELPERS ==========
@@ -185,6 +195,9 @@ class PetEngine {
     clearTimeout(this._bubbleDelayTimer);
     this._bubbleDelayTimer = null;
     this.hideBubble();
+    // Apply personality visual class
+    this.container.classList.remove('personality-clingy', 'personality-tsundere', 'personality-energetic', 'personality-dramatic');
+    this.container.classList.add('personality-' + id);
     // Refresh current behavior
     if (this.mode === 'companion' && !this.isPaused && this.state === 'idle') {
       this.scheduleNextAction();
@@ -267,25 +280,16 @@ class PetEngine {
     var distance = Math.sqrt(dx * dx + dy * dy);
 
     var wasNearby = this._isNearby;
-    this._isNearby = distance < 120;
+    this._isNearby = distance < 140;
 
     if (this._isNearby && !this.isDragging) {
-      // Pupils track mouse
-      var pupilDx = Math.max(-2, Math.min(2, dx * 0.015));
-      var pupilDy = Math.max(-1.5, Math.min(1, dy * 0.01));
-      this.character.style.setProperty('--pupil-dx', pupilDx + 'px');
-      this.character.style.setProperty('--pupil-dy', pupilDy + 'px');
-
-      // First time entering proximity
+      // First time entering proximity — say hi
       if (!wasNearby && (this.state === 'idle' || this.state === 'sitting')) {
         if (Math.random() < 0.3 && this.bubble && !this.bubble.classList.contains('show')) {
           this.showBubble(pickRandom(this._getTexts().nearbyGreet), true);
           setTimeout(() => this.hideBubble(), 1200);
         }
       }
-    } else {
-      this.character.style.setProperty('--pupil-dx', '0px');
-      this.character.style.setProperty('--pupil-dy', '0px');
     }
   }
 
@@ -340,6 +344,10 @@ class PetEngine {
     this._startMoodCheck();
     this._startAnalyticsTimer();
 
+    // Ensure personality visual class is applied
+    this.container.classList.remove('personality-clingy', 'personality-tsundere', 'personality-energetic', 'personality-dramatic');
+    this.container.classList.add('personality-' + this.personality);
+
     switch (mode) {
       case 'companion':
         this.container.style.opacity = '1';
@@ -368,10 +376,23 @@ class PetEngine {
   setState(newState) {
     if (this.state === newState) return;
     var wasSleeping = this.state === 'sleeping';
-    this.character.classList.remove(this.state);
-    this.character.classList.remove('annoyed', 'surprised');
     this.state = newState;
-    this.character.classList.add(newState);
+
+    // Map internal states to sprite states
+    var spriteState = newState;
+    if (newState === 'stopping') spriteState = 'idle';
+    if (newState === 'reminding') spriteState = 'remind';
+    if (newState === 'sitting') spriteState = 'sit';
+
+    if (this._spritesReady) {
+      this.sprite.play(spriteState);
+    }
+
+    // CSS class for stopping head tilt
+    this.character.classList.remove('head-tilt', 'paw-stretch');
+    if (newState === 'stopping') {
+      this.character.classList.add('head-tilt');
+    }
 
     // Wake-up stretch
     if (wasSleeping && newState !== 'sleeping') {
@@ -382,24 +403,10 @@ class PetEngine {
     }
   }
 
-  // ========== BLINK (companion only) ==========
+  // ========== BLINK (now handled by sprite animation frames) ==========
 
   startBlinkTimer() {
-    this._clearTimer('blink');
-    if (this.mode !== 'companion') return;
-    var moodLevel = this.growth.getMoodLevel();
-    var minDelay, maxDelay;
-    if (moodLevel === 'high') { minDelay = 2000; maxDelay = 4500; }
-    else if (moodLevel === 'low') { minDelay = 3500; maxDelay = 8000; }
-    else { minDelay = 2500; maxDelay = 6000; }
-    var delay = minDelay + Math.random() * (maxDelay - minDelay);
-    this._setTimer('blink', () => {
-      if (this.state === 'idle' || this.state === 'stopping' || this.state === 'sitting') {
-        this.character.classList.add('blink');
-        setTimeout(() => { this.character.classList.remove('blink'); }, 150);
-      }
-      if (this.mode === 'companion') this.startBlinkTimer();
-    }, delay);
+    // Blinking is built into sprite idle frames, no separate timer needed
   }
 
   // ========== DRAG (companion only) ==========
@@ -461,7 +468,6 @@ class PetEngine {
       this._setTimer('state', () => {
         this.hideBubble();
         this.scheduleNextAction();
-        this.startBlinkTimer();
       }, 800);
     }
   }
@@ -482,7 +488,56 @@ class PetEngine {
       var profile = this._getTimeProfile();
       var moodLevel = this.growth.getMoodLevel();
 
-      // Apply mood modifiers to action probabilities
+      // === Performance animations (happy / surprised / annoyed) ===
+      // Personality-driven rates
+      var expr = this._getBehavior().expressions || {};
+      var perfRoll = Math.random();
+      var happyThreshold = expr.happy || 0;
+      var surprisedThreshold = happyThreshold + (expr.surprised || 0);
+      var annoyedThreshold = surprisedThreshold + (expr.annoyed || 0);
+
+      if (perfRoll < happyThreshold && texts.moodHigh) {
+        this.setState('happy');
+        this.showBubble(pickRandom(texts.moodHigh), true);
+        this._setTimer('state', () => {
+          this.hideBubble();
+          this.setState('idle');
+          this.scheduleNextAction();
+        }, 1200);
+        return;
+      }
+      if (perfRoll < surprisedThreshold) {
+        this.setState('surprised');
+        var surprisePool = [
+          '？！',
+          '（竖起耳朵）',
+          '（突然警觉）',
+        ];
+        this.showBubble(pickRandom(surprisePool), true);
+        this._setTimer('state', () => {
+          this.hideBubble();
+          this.setState('idle');
+          this.scheduleNextAction();
+        }, 1000);
+        return;
+      }
+      if (perfRoll < annoyedThreshold) {
+        this.setState('annoyed');
+        var annoyPool = [
+          '啧。',
+          '（甩尾巴）',
+          '（撇头）',
+        ];
+        this.showBubble(pickRandom(annoyPool), true);
+        this._setTimer('state', () => {
+          this.hideBubble();
+          this.setState('idle');
+          this.scheduleNextAction();
+        }, 800);
+        return;
+      }
+
+      // === Normal action probabilities ===
       var walk = profile.walk, sit = profile.sit, look = profile.look, yawn = profile.yawn;
       if (moodLevel === 'high') {
         walk *= 1.3; sit *= 0.6; yawn *= 0.5;
@@ -498,21 +553,6 @@ class PetEngine {
       var sEnd = wEnd + sit;
       var lEnd = sEnd + look;
 
-      // High mood: 10% chance of spontaneous happy reaction
-      if (moodLevel === 'high' && Math.random() < 0.1 && texts.moodHigh) {
-        var baseTransform = this._facingLeft ? 'scaleX(-1)' : '';
-        this.character.style.transition = 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        this.character.style.transform = baseTransform + ' rotate(360deg)';
-        this.showBubble(pickRandom(texts.moodHigh), true);
-        this._setTimer('state', () => {
-          this.character.style.transform = baseTransform;
-          this.character.style.transition = 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
-          this.hideBubble();
-          this.scheduleNextAction();
-        }, 1200);
-        return;
-      }
-
       if (r < wEnd) {
         this.wander();
       } else if (r < sEnd) {
@@ -525,8 +565,17 @@ class PetEngine {
           sitPool = texts.moodHigh;
         }
         this._bubbleThen(pickRandom(sitPool), false, 3500, () => {
-          this.setState('idle');
-          this.scheduleNextAction();
+          // Random expression break: personality-driven rate
+          var behavior = this._getBehavior();
+          if (Math.random() < (behavior.sitBreak || 0.2)) {
+            this._playRandomExpression(() => {
+              this.setState('idle');
+              this.scheduleNextAction();
+            });
+          } else {
+            this.setState('idle');
+            this.scheduleNextAction();
+          }
         });
       } else if (r < lEnd) {
         this.setState('stopping');
@@ -703,15 +752,10 @@ class PetEngine {
     });
 
     window.petAPI.onUpdateSettings((settings) => {
-      if (settings.restInterval) {
-        this.restInterval = settings.restInterval;
-        this._clearTimer('restReminder');
-        this._cycleHealthTimer('restReminder', this.restInterval, 'healthRest');
-      }
-      if (settings.standInterval) {
-        this.standInterval = settings.standInterval;
-        this._clearTimer('standReminder');
-        this._cycleHealthTimer('standReminder', this.standInterval, 'healthStand');
+      if (settings.breakInterval) {
+        this.breakInterval = settings.breakInterval;
+        this._clearTimer('breakReminder');
+        this._cycleHealthTimer('breakReminder', this.breakInterval, 'healthBreak');
       }
       if (settings.waterInterval) {
         this.waterInterval = settings.waterInterval;
@@ -725,6 +769,17 @@ class PetEngine {
 
   setMode(mode) {
     this.switchMode(mode);
+  }
+
+  // ========== RANDOM EXPRESSION FLASH ==========
+
+  _playRandomExpression(callback) {
+    var bias = this._getBehavior().exprBias || ['happy', 'surprised', 'annoyed'];
+    var expr = bias[Math.floor(Math.random() * bias.length)];
+    this.setState(expr);
+    this._setTimer('state', () => {
+      if (callback) callback();
+    }, 600);
   }
 
   // ========== IDLE MICRO-ANIMATIONS ==========
@@ -742,24 +797,23 @@ class PetEngine {
   }
 
   _playIdleAnimation() {
-    var anims = ['nose-twitch', 'ear-flick', 'ear-flick'];
-    var anim = anims[Math.floor(Math.random() * anims.length)];
-    switch (anim) {
-      case 'nose-twitch':
-        this.character.classList.add('nose-twitch');
-        setTimeout(() => this.character.classList.remove('nose-twitch'), 500);
-        break;
-      case 'ear-flick': {
-        var isLeft = Math.random() < 0.5;
-        var ear = this.character.querySelector(isLeft ? '.ear-left' : '.ear-right');
-        if (ear) {
-          var keyframe = isLeft ? 'ear-flick-left' : 'ear-flick-right';
-          ear.style.animation = 'none';
-          ear.offsetHeight; // force reflow
-          ear.style.animation = keyframe + ' 0.4s ease';
-        }
-        break;
-      }
+    // Personality-driven expression during idle
+    var behavior = this._getBehavior();
+    if (Math.random() < (behavior.idleExpr || 0.15)) {
+      var bias = behavior.exprBias || ['happy', 'surprised'];
+      var chosen = bias[Math.floor(Math.random() * bias.length)];
+      this.setState(chosen);
+      this._setTimer('idleAnim', () => {
+        this.setState(this.state === 'walking' ? 'walking' : 'idle');
+      }, 500);
+      return;
+    }
+    // Wiggle as fallback micro-animation
+    if (Math.random() < 0.4) {
+      this.character.style.animation = 'none';
+      this.character.offsetHeight; // force reflow
+      this.character.style.animation = 'wiggle 0.5s ease';
+      setTimeout(() => { this.character.style.animation = ''; }, 600);
     }
   }
 
@@ -792,7 +846,7 @@ class PetEngine {
         // Update mood bar
         var mood = this.growth.getMood();
         var pct = ((mood - GrowthManager.MOOD_FLOOR) / (GrowthManager.MOOD_CEILING - GrowthManager.MOOD_FLOOR)) * 100;
-        this.character.style.setProperty('--mood-pct', pct + '%');
+        this.container.style.setProperty('--mood-pct', pct + '%');
       } catch {
         // Ensure chain continues even on error
       }

@@ -84,6 +84,7 @@
       this.showBubble(pickRandom(texts.encourage), true);
       this._setTimer('state', () => {
         this.hideBubble();
+        this.setState('idle');
         this._popOutAfterReminder();
       }, 800);
       return;
@@ -101,28 +102,25 @@
     var self = this;
     var texts = this._getTexts();
     var clickCount = this._getRecentClickCount();
-    var baseTransform = this._facingLeft ? 'scaleX(-1)' : '';
 
     // Progressive click reactions
     if (clickCount >= 4) {
-      this.character.classList.add('annoyed');
+      this.setState('annoyed');
       this.showBubble(pickRandom(texts.click4Plus), true);
       this._setTimer('reaction', function () {
-        self.character.classList.remove('annoyed');
         self.hideBubble();
+        self.setState('idle');
         self.scheduleNextAction();
       }, 1500);
       return;
     }
 
     if (clickCount === 3) {
-      this.character.classList.add('surprised');
+      this.setState('surprised');
       this.showBubble(pickRandom(texts.click3), true);
-      this.character.style.transform = baseTransform + ' translateY(-25px) scale(1.1)';
       this._setTimer('reaction', function () {
-        self.character.style.transform = baseTransform;
-        self.character.classList.remove('surprised');
         self.hideBubble();
+        self.setState('idle');
         self.scheduleNextAction();
       }, 800);
       return;
@@ -130,9 +128,7 @@
 
     if (clickCount === 2) {
       this.showBubble(pickRandom(texts.click2), true);
-      this.character.style.transform = baseTransform + ' translateY(-15px)';
       this._setTimer('reaction', function () {
-        self.character.style.transform = baseTransform;
         self.hideBubble();
         self.scheduleNextAction();
       }, 500);
@@ -145,11 +141,11 @@
 
     switch (reaction) {
       case 'jump': {
-        this.character.style.transform = baseTransform + ' translateY(-20px)';
+        this.setState('surprised');
         this.showBubble(pickRandom(texts.jump), true);
         this._setTimer('reaction', function () {
-          self.character.style.transform = baseTransform;
           self.hideBubble();
+          self.setState('idle');
           self.scheduleNextAction();
         }, 400);
         break;
@@ -165,10 +161,10 @@
         break;
       }
       case 'tilt': {
-        this.character.style.transform = baseTransform + ' rotate(-12deg)';
         this.showBubble(pickRandom(texts.tilt), true);
+        this.character.classList.add('head-tilt');
         this._setTimer('reaction', function () {
-          self.character.style.transform = baseTransform;
+          self.character.classList.remove('head-tilt');
           self.hideBubble();
           self.scheduleNextAction();
         }, 900);
@@ -176,10 +172,10 @@
       }
       case 'spin': {
         this.character.style.transition = 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        this.character.style.transform = baseTransform + ' rotate(360deg)';
+        this.character.style.transform = 'rotate(360deg)';
         this.showBubble(pickRandom(texts.spin), true);
         this._setTimer('reaction', function () {
-          self.character.style.transform = baseTransform;
+          self.character.style.transform = '';
           self.character.style.transition = 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
           self.hideBubble();
           self.scheduleNextAction();

@@ -10,77 +10,10 @@
   <!-- Pet Container -->
   <div id="pet-container">
     <div id="pet-character" class="idle">
-      <div class="cat">
-        <!-- Ground shadow -->
-        <div class="cat-shadow"></div>
-
-        <!-- Mood bar -->
-        <div class="mood-bar"><div class="mood-bar-fill"></div></div>
-
-        <!-- Ears -->
-        <div class="ear ear-left"><div class="ear-inner"></div></div>
-        <div class="ear ear-right"><div class="ear-inner"></div></div>
-
-        <!-- Head -->
-        <div class="head">
-          <div class="forehead-mark"></div>
-          <div class="head-stripe stripe-1"></div>
-          <div class="head-stripe stripe-2"></div>
-
-          <div class="eye eye-left">
-            <div class="pupil">
-              <div class="highlight highlight-main"></div>
-              <div class="highlight highlight-small"></div>
-            </div>
-          </div>
-          <div class="eye eye-right">
-            <div class="pupil">
-              <div class="highlight highlight-main"></div>
-              <div class="highlight highlight-small"></div>
-            </div>
-          </div>
-
-          <div class="nose"></div>
-          <div class="mouth"></div>
-
-          <!-- Whiskers -->
-          <div class="whisker-group whisker-left">
-            <div class="whisker w-1"></div>
-            <div class="whisker w-2"></div>
-            <div class="whisker w-3"></div>
-          </div>
-          <div class="whisker-group whisker-right">
-            <div class="whisker w-1"></div>
-            <div class="whisker w-2"></div>
-            <div class="whisker w-3"></div>
-          </div>
-        </div>
-
-        <!-- Face decorations -->
-        <div class="blush blush-left"></div>
-        <div class="blush blush-right"></div>
-        <div class="cheek-fluff cheek-left"></div>
-        <div class="cheek-fluff cheek-right"></div>
-
-        <!-- Body -->
-        <div class="body">
-          <div class="body-stripe bs-1"></div>
-          <div class="body-stripe bs-2"></div>
-          <div class="body-stripe bs-3"></div>
-          <div class="chest-patch"></div>
-        </div>
-
-        <!-- Tail -->
-        <div class="tail">
-          <div class="tail-stripe ts-1"></div>
-          <div class="tail-stripe ts-2"></div>
-          <div class="tail-tip"></div>
-        </div>
-
-        <!-- Paws -->
-        <div class="paw paw-left"><div class="toe-bean"></div></div>
-        <div class="paw paw-right"><div class="toe-bean"></div></div>
-      </div>
+      <!-- Sprite image rendered by SpriteManager -->
+      <img id="pet-sprite" src="" alt="" draggable="false">
+      <!-- Mood bar -->
+      <div class="mood-bar"><div class="mood-bar-fill"></div></div>
     </div>
 
     <!-- Close button (top-right of pet) -->
@@ -144,21 +77,11 @@
           <div class="setting-group" style="margin-bottom:10px">
             <label class="setting-label" style="cursor:default">
               <span class="setting-emoji" style="font-size:12px">💤</span>
-              休息提醒
+              休息活动
             </label>
             <div class="setting-slider">
-              <input type="range" id="rest-interval" min="15" max="120" value="45" step="5">
-              <span id="rest-value" class="slider-value">45分钟</span>
-            </div>
-          </div>
-          <div class="setting-group" style="margin-bottom:10px">
-            <label class="setting-label" style="cursor:default">
-              <span class="setting-emoji" style="font-size:12px">🧍</span>
-              站起来活动
-            </label>
-            <div class="setting-slider">
-              <input type="range" id="stand-interval" min="15" max="120" value="60" step="5">
-              <span id="stand-value" class="slider-value">60分钟</span>
+              <input type="range" id="break-interval" min="15" max="120" value="45" step="5">
+              <span id="break-value" class="slider-value">45分钟</span>
             </div>
           </div>
           <div class="setting-group" style="margin-bottom:0">
@@ -242,6 +165,7 @@
   <!-- Scripts -->
   <script src="js/personalities.js"></script>
   <script src="js/growth.js"></script>
+  <script src="js/sprite-manager.js"></script>
   <script src="js/pet.js"></script>
   <script src="js/pet-movement.js"></script>
   <script src="js/pet-interaction.js"></script>

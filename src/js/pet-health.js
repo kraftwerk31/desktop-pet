@@ -1,6 +1,6 @@
 /**
  * Pet Health Reminder System - extends PetEngine.prototype
- * Health reminders: rest, stand up, drink water
+ * Health reminders: break (rest + stand up), drink water
  * Pop-in / pop-out for reminder mode
  */
 
@@ -12,13 +12,11 @@
   // ========== HEALTH REMINDER LIFECYCLE ==========
 
   proto.startHealthReminders = function () {
-    this._clearTimer('restReminder');
-    this._clearTimer('standReminder');
+    this._clearTimer('breakReminder');
     this._clearTimer('waterReminder');
     if (this.isPaused) return;
 
-    this._cycleHealthTimer('restReminder', this.restInterval, 'healthRest');
-    this._cycleHealthTimer('standReminder', this.standInterval, 'healthStand');
+    this._cycleHealthTimer('breakReminder', this.breakInterval, 'healthBreak');
     this._cycleHealthTimer('waterReminder', this.waterInterval, 'healthWater');
   };
 
@@ -128,16 +126,10 @@
 
   // ========== PUBLIC API ==========
 
-  proto.setRestInterval = function (minutes) {
-    this.restInterval = minutes * 60 * 1000;
-    this._clearTimer('restReminder');
-    this._cycleHealthTimer('restReminder', this.restInterval, 'healthRest');
-  };
-
-  proto.setStandInterval = function (minutes) {
-    this.standInterval = minutes * 60 * 1000;
-    this._clearTimer('standReminder');
-    this._cycleHealthTimer('standReminder', this.standInterval, 'healthStand');
+  proto.setBreakInterval = function (minutes) {
+    this.breakInterval = minutes * 60 * 1000;
+    this._clearTimer('breakReminder');
+    this._cycleHealthTimer('breakReminder', this.breakInterval, 'healthBreak');
   };
 
   proto.setWaterInterval = function (minutes) {

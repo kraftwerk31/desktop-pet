@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="140" viewBox="0 0 120 140">
+  <!-- Tail (wrapped around to the side) -->
+  <path d="M35 115 Q18 118 15 105 Q13 95 20 96 Q26 97 22 106 Q20 112 32 112" fill="#D4A574" stroke="#C49668" stroke-width="1"/>
+  <path d="M17 102 Q19 98 23 100" stroke="#C49668" stroke-width="1.2" fill="none"/>
+  <!-- Body (sitting - rounder, lower) -->
+  <ellipse cx="60" cy="105" rx="28" ry="22" fill="#D4A574"/>
+  <!-- Belly -->
+  <ellipse cx="62" cy="108" rx="18" ry="16" fill="#F5EDE4"/>
+  <!-- Body stripes -->
+  <path d="M44 94 Q50 90 56 94" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M40 100 Q48 96 54 100" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M42 106 Q48 103 55 106" stroke="#C49668" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- Back legs (folded, sitting) -->
+  <ellipse cx="38" cy="118" rx="12" ry="7" fill="#D4A574"/>
+  <ellipse cx="82" cy="118" rx="12" ry="7" fill="#B8845A"/>
+  <!-- Front paws (together, in front) -->
+  <ellipse cx="54" cy="122" rx="8" ry="5" fill="#E8C9A8"/>
+  <ellipse cx="68" cy="122" rx="8" ry="5" fill="#D4A574"/>
+  <!-- Toe beans left paw -->
+  <circle cx="50" cy="123" r="1.5" fill="#E8B4B8"/>
+  <circle cx="54" cy="124" r="1.5" fill="#E8B4B8"/>
+  <circle cx="58" cy="123" r="1.5" fill="#E8B4B8"/>
+  <!-- Toe beans right paw -->
+  <circle cx="64" cy="123" r="1.5" fill="#E8B4B8"/>
+  <circle cx="68" cy="124" r="1.5" fill="#E8B4B8"/>
+  <circle cx="72" cy="123" r="1.5" fill="#E8B4B8"/>
+  <!-- Front legs connecting to paws -->
+  <rect x="48" y="108" width="10" height="14" rx="5" fill="#D4A574"/>
+  <rect x="62" y="108" width="10" height="14" rx="5" fill="#B8845A"/>
+  <!-- Head -->
+  <ellipse cx="60" cy="60" rx="26" ry="24" fill="#D4A574"/>
+  <!-- Cheek blush -->
+  <ellipse cx="40" cy="65" rx="6" ry="4" fill="#E8B4B8" opacity="0.5"/>
+  <ellipse cx="80" cy="65" rx="6" ry="4" fill="#E8B4B8" opacity="0.5"/>
+  <!-- M-mark -->
+  <path d="M48 45 L52 39 L56 45" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M56 45 L60 39 L64 45" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M64 45 L68 39 L72 45" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Left ear -->
+  <path d="M36 49 L30 23 L48 41" fill="#D4A574"/>
+  <path d="M38 47 L33 27 L46 41" fill="#E8B4B8"/>
+  <!-- Right ear -->
+  <path d="M84 49 L90 23 L72 41" fill="#D4A574"/>
+  <path d="M82 47 L87 27 L74 41" fill="#E8B4B8"/>
+  <!-- Left eye -->
+  <ellipse cx="50" cy="59" rx="6" ry="6.5" fill="white"/>
+  <ellipse cx="51" cy="60" rx="4" ry="4.5" fill="#4A3F35"/>
+  <circle cx="53" cy="58" r="1.5" fill="white"/>
+  <circle cx="49" cy="62" r="0.8" fill="white"/>
+  <!-- Right eye -->
+  <ellipse cx="70" cy="59" rx="6" ry="6.5" fill="white"/>
+  <ellipse cx="71" cy="60" rx="4" ry="4.5" fill="#4A3F35"/>
+  <circle cx="73" cy="58" r="1.5" fill="white"/>
+  <circle cx="69" cy="62" r="0.8" fill="white"/>
+  <!-- Nose -->
+  <path d="M58 67 L60 69 L62 67" fill="#D4918A" stroke="#D4918A" stroke-width="0.5" stroke-linejoin="round"/>
+  <!-- Mouth -->
+  <path d="M60 69 Q56 73 54 71" stroke="#4A3F35" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M60 69 Q64 73 66 71" stroke="#4A3F35" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <!-- Whiskers left -->
+  <line x1="44" y1="65" x2="28" y2="62" stroke="#4A3F35" stroke-width="0.7"/>
+  <line x1="44" y1="67" x2="28" y2="68" stroke="#4A3F35" stroke-width="0.7"/>
+  <line x1="44" y1="69" x2="29" y2="74" stroke="#4A3F35" stroke-width="0.7"/>
+  <!-- Whiskers right -->
+  <line x1="76" y1="65" x2="92" y2="62" stroke="#4A3F35" stroke-width="0.7"/>
+  <line x1="76" y1="67" x2="92" y2="68" stroke="#4A3F35" stroke-width="0.7"/>
+  <line x1="76" y1="69" x2="91" y2="74" stroke="#4A3F35" stroke-width="0.7"/>
+  <!-- White chest patch -->
+  <ellipse cx="60" cy="92" rx="10" ry="8" fill="#F5EDE4"/>
+</svg>

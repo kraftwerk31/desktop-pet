@@ -1,5 +1,5 @@
 /* ========================================
-   Desktop Pet - Morandi Orange Tabby CSS
+   Desktop Pet - Sprite-based CSS
    ======================================== */
 
 /* ========== DESIGN TOKENS ========== */
@@ -7,18 +7,12 @@
   /* Morandi Warm Palette - Orange Tabby */
   --m-orange-main: #D4A574;
   --m-orange-light: #E8C9A8;
-  --m-orange-lighter: #F0D9C0;
   --m-orange-dark: #B8845A;
-  --m-orange-stripe: #C49668;
-  --m-orange-stripe-light: rgba(196,150,104,0.5);
-  --m-cream: #F5EDE4;
-  --m-cream-light: #FAF4EE;
   --m-pink: #E8B4B8;
   --m-pink-warm: #E0A8A0;
   --m-pink-soft: rgba(232,180,184,0.3);
   --m-nose: #D4918A;
   --m-dark: #4A3F35;
-  --m-dark-soft: rgba(74,63,53,0.85);
 
   /* UI Colors */
   --m-bg-warm: #FAF6F1;
@@ -70,7 +64,7 @@ html, body {
   left: 50%;
   z-index: 1;
   pointer-events: auto;
-  filter: drop-shadow(0 2px 6px rgba(74,63,53,0.1));
+  filter: drop-shadow(0 3px 10px rgba(74,63,53,0.12));
 }
 
 /* ========== CLOSE BUTTON ========== */
@@ -112,10 +106,10 @@ html, body {
   transform: scale(0.95);
 }
 
-/* ========== CAT CHARACTER ========== */
+/* ========== PET CHARACTER (sprite wrapper) ========== */
 #pet-character {
-  width: 88px;
-  height: 100px;
+  width: 120px;
+  height: 140px;
   position: relative;
   cursor: grab;
   transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -128,540 +122,59 @@ html, body {
   cursor: grabbing;
 }
 
-.cat {
-  position: relative;
-  width: 88px;
-  height: 100px;
+/* Sprite image */
+#pet-sprite {
+  width: 120px;
+  height: 140px;
+  display: block;
+  pointer-events: none;
+  object-fit: contain;
+  transition: opacity 0.15s ease;
 }
 
-/* ---------- Ground Shadow ---------- */
-.cat-shadow {
-  position: absolute;
-  bottom: -3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 52px;
-  height: 8px;
-  background: radial-gradient(ellipse, rgba(74,63,53,0.1) 0%, transparent 70%);
-  border-radius: 50%;
-}
-
-/* ---------- Body ---------- */
-.cat .body {
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 44px;
-  height: 36px;
-  background: var(--m-orange-main);
-  border-radius: 22px 22px 14px 14px;
-  overflow: hidden;
-}
-
-/* Body stripes */
-.cat .body-stripe {
-  position: absolute;
-  background: var(--m-orange-stripe-light);
-  border-radius: 50%;
-}
-.cat .bs-1 {
-  top: 6px;
-  left: 6px;
-  width: 12px;
-  height: 3px;
+/* Head tilt for "stopping" state */
+#pet-character.head-tilt {
   transform: rotate(-8deg);
 }
-.cat .bs-2 {
-  top: 14px;
-  left: 10px;
-  width: 14px;
-  height: 3px;
-  transform: rotate(5deg);
-}
-.cat .bs-3 {
-  top: 22px;
-  left: 7px;
-  width: 10px;
-  height: 3px;
-  transform: rotate(-3deg);
-}
 
-/* Chest patch (white belly) */
-.cat .chest-patch {
+/* ========== MOOD BAR ========== */
+.mood-bar {
   position: absolute;
-  bottom: 0;
+  bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
-  width: 24px;
-  height: 18px;
-  background: var(--m-cream);
-  border-radius: 12px 12px 10px 10px;
-}
-
-/* ---------- Head ---------- */
-.cat .head {
-  position: absolute;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 52px;
-  height: 46px;
-  background: var(--m-orange-main);
-  border-radius: 50% 50% 48% 48%;
-  z-index: 2;
+  width: 36px;
+  height: 3px;
+  background: var(--m-border-medium);
+  border-radius: 2px;
   overflow: hidden;
-}
-
-/* Forehead M-mark */
-.cat .forehead-mark {
-  position: absolute;
-  top: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 14px;
-  height: 8px;
-  border-top: 2px solid var(--m-orange-stripe);
-  border-left: 2px solid var(--m-orange-stripe);
-  border-right: 2px solid var(--m-orange-stripe);
-  border-radius: 8px 8px 0 0;
   opacity: 0.7;
+  transition: opacity 0.3s ease;
 }
-
-/* Head stripes */
-.cat .head-stripe {
-  position: absolute;
-  background: var(--m-orange-stripe-light);
-  border-radius: 50%;
-}
-.cat .stripe-1 {
-  top: 6px;
-  left: 8px;
-  width: 8px;
-  height: 2.5px;
-  transform: rotate(-15deg);
-}
-.cat .stripe-2 {
-  top: 6px;
-  right: 8px;
-  width: 8px;
-  height: 2.5px;
-  transform: rotate(15deg);
-}
-
-/* ---------- Ears ---------- */
-.cat .ear {
-  position: absolute;
-  bottom: 62px;
-  width: 16px;
-  height: 16px;
-  background: var(--m-orange-main);
-  z-index: 1;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-}
-.cat .ear-left {
-  left: 12px;
-  transform: rotate(-8deg);
-}
-.cat .ear-right {
-  right: 12px;
-  transform: rotate(8deg);
-}
-
-/* Inner ear - pink */
-.cat .ear-inner {
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 9px;
-  height: 9px;
-  background: var(--m-pink);
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  opacity: 0.6;
-}
-
-/* ---------- Eyes ---------- */
-.cat .eye {
-  position: absolute;
-  top: 16px;
-  width: 13px;
-  height: 14px;
-  background: var(--m-dark);
-  border-radius: 50%;
-  z-index: 3;
-  overflow: hidden;
-}
-.cat .eye-left { left: 10px; }
-.cat .eye-right { right: 10px; }
-
-/* Pupils with dual highlights (anime style) */
-.cat .pupil {
-  position: relative;
-  width: 100%;
+.mood-bar-fill {
   height: 100%;
-  transform: translate(var(--pupil-dx, 0px), var(--pupil-dy, 0px));
-  transition: transform 0.3s ease;
+  width: var(--mood-pct, 60%);
+  background: var(--m-accent);
+  border-radius: 2px;
+  transition: width 1s ease, background 0.5s ease;
 }
 
-.cat .highlight {
-  position: absolute;
-  background: #fff;
-  border-radius: 50%;
-  z-index: 4;
+/* ========== MOOD VISUAL EFFECTS ========== */
+#pet-container.mood-high #pet-character {
+  filter: brightness(1.06) saturate(1.08);
 }
-.cat .highlight-main {
-  top: 2px;
-  right: 2px;
-  width: 5px;
-  height: 5px;
-}
-.cat .highlight-small {
-  bottom: 3px;
-  left: 3px;
-  width: 3px;
-  height: 3px;
-  opacity: 0.7;
-}
-
-/* ---------- Nose ---------- */
-.cat .nose {
-  position: absolute;
-  top: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 7px;
-  height: 5px;
-  background: var(--m-nose);
-  border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
-  z-index: 3;
-}
-
-/* ---------- Mouth ---------- */
-.cat .mouth {
-  position: absolute;
-  top: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 6px;
-  z-index: 3;
-}
-/* W-shaped cat mouth using pseudo-elements */
-.cat .mouth::before,
-.cat .mouth::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  width: 6px;
-  height: 5px;
-  border-bottom: 1.5px solid var(--m-orange-dark);
-  border-radius: 0 0 50% 50%;
-}
-.cat .mouth::before { left: 0; }
-.cat .mouth::after { right: 0; }
-
-/* ---------- Whiskers (3 per side) ---------- */
-.cat .whisker-group {
-  position: absolute;
-  top: 28px;
-  z-index: 3;
-}
-.cat .whisker-left { left: -2px; }
-.cat .whisker-right { right: -2px; }
-
-.cat .whisker {
-  position: absolute;
-  width: 16px;
-  height: 1px;
-  background: var(--m-orange-dark);
-  opacity: 0.5;
-  border-radius: 1px;
-}
-
-/* Left whiskers */
-.cat .whisker-left .w-1 { top: 0; left: 0; transform: rotate(-12deg); width: 14px; }
-.cat .whisker-left .w-2 { top: 5px; left: -1px; transform: rotate(-3deg); width: 16px; }
-.cat .whisker-left .w-3 { top: 10px; left: 0; transform: rotate(8deg); width: 13px; }
-
-/* Right whiskers (mirrored) */
-.cat .whisker-right .w-1 { top: 0; right: 0; transform: rotate(12deg); width: 14px; }
-.cat .whisker-right .w-2 { top: 5px; right: -1px; transform: rotate(3deg); width: 16px; }
-.cat .whisker-right .w-3 { top: 10px; right: 0; transform: rotate(-8deg); width: 13px; }
-
-/* ---------- Blush ---------- */
-.cat .blush {
-  position: absolute;
-  top: 24px;
-  width: 8px;
-  height: 5px;
-  background: var(--m-pink-soft);
-  border-radius: 50%;
-  z-index: 3;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-.cat .blush-left { left: 5px; }
-.cat .blush-right { right: 5px; }
-
-/* ---------- Cheek Fluff ---------- */
-.cat .cheek-fluff {
-  position: absolute;
-  bottom: 6px;
-  width: 12px;
-  height: 8px;
-  background: var(--m-cream);
-  border-radius: 50%;
-  z-index: 2;
-  opacity: 0.4;
-}
-.cat .cheek-left { left: 1px; }
-.cat .cheek-right { right: 1px; }
-
-/* ---------- Paws with Toe Beans ---------- */
-.cat .paw {
-  position: absolute;
-  bottom: 0;
-  width: 14px;
-  height: 8px;
-  background: var(--m-orange-light);
-  border-radius: 50%;
-  z-index: 3;
-}
-.cat .paw-left { left: 18px; }
-.cat .paw-right { right: 18px; }
-
-/* Toe beans (pink paw pads) */
-.cat .toe-bean {
-  position: absolute;
-  bottom: 1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 3px;
-  background: var(--m-pink-warm);
-  border-radius: 50%;
-  opacity: 0.45;
-}
-
-/* ---------- Tail ---------- */
-.cat .tail {
-  position: absolute;
-  bottom: 16px;
-  right: -12px;
-  width: 24px;
-  height: 10px;
-  background: var(--m-orange-main);
-  border-radius: 0 12px 12px 0;
-  transform-origin: left center;
-  animation: tail-wag 2.4s ease-in-out infinite;
-  overflow: hidden;
-}
-
-/* Tail stripes */
-.cat .tail-stripe {
-  position: absolute;
-  background: var(--m-orange-stripe-light);
-  border-radius: 50%;
-}
-.cat .ts-1 {
-  top: 2px;
-  left: 6px;
-  width: 8px;
-  height: 2.5px;
-}
-.cat .ts-2 {
-  top: 5px;
-  left: 14px;
-  width: 6px;
-  height: 2px;
-}
-
-/* Dark tail tip */
-.cat .tail-tip {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 7px;
-  height: 100%;
-  background: var(--m-orange-dark);
-  border-radius: 0 12px 12px 0;
-  opacity: 0.5;
-}
-
-/* ========== STATE: IDLE ========== */
-#pet-character.idle .body {
-  animation: breathe 3s ease-in-out infinite;
-}
-
-/* ========== STATE: HAPPY ========== */
-#pet-character.happy .blush { opacity: 1; }
-
-/* Happy eyes - become ^^ arcs */
-#pet-character.happy .eye {
-  background: transparent;
-  height: 6px;
-  top: 20px;
-  overflow: visible;
-}
-#pet-character.happy .eye::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 13px;
-  height: 7px;
-  border-top: 2.5px solid var(--m-dark);
-  border-radius: 50% 50% 0 0;
-}
-#pet-character.happy .pupil,
-#pet-character.happy .highlight { display: none; }
-
-/* Heart particle */
-#pet-character.happy::after {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 14px;
-  height: 14px;
+#pet-container.mood-high .mood-bar-fill {
   background: var(--m-pink);
-  clip-path: path('M7 2.5C7 1.12 8.12 0 9.5 0S12 1.12 12 2.5c0 0 0 0 0 0C12 1.12 13.12 0 14.5 0S17 1.12 17 2.5C17 5.5 12 8.5 12 8.5S7 5.5 7 2.5z');
-  animation: float-heart 1s ease-out forwards;
-  pointer-events: none;
 }
 
-/* ========== STATE: SLEEPING ========== */
-#pet-character.sleeping .eye {
-  height: 3px;
-  top: 22px;
-  background: transparent;
-  overflow: visible;
+#pet-container.mood-low #pet-character {
+  filter: brightness(0.93) saturate(0.88);
 }
-#pet-character.sleeping .eye::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 13px;
-  height: 4px;
-  border-bottom: 2px solid var(--m-dark);
-  border-radius: 0 0 50% 50%;
-}
-#pet-character.sleeping .pupil,
-#pet-character.sleeping .highlight { display: none; }
-
-/* zzz indicator */
-#pet-character.sleeping::after {
-  content: 'z Z z';
-  position: absolute;
-  top: -18px;
-  right: -14px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--m-text-muted);
-  animation: zzz 2.5s ease-in-out infinite;
-  pointer-events: none;
-  letter-spacing: 1px;
+#pet-container.mood-low .mood-bar-fill {
+  background: var(--m-text-muted);
 }
 
-#pet-character.sleeping .tail {
-  animation: none;
-}
-
-#pet-character.sleeping .body {
-  animation: sleep-breathe 4s ease-in-out infinite;
-}
-
-/* ========== STATE: REMINDING ========== */
-#pet-character.reminding .eye {
-  width: 15px;
-  height: 16px;
-  transition: all 0.3s ease;
-}
-#pet-character.reminding .eye-left { left: 7px; }
-#pet-character.reminding .eye-right { right: 7px; }
-#pet-character.reminding .highlight-main {
-  width: 6px;
-  height: 6px;
-}
-
-#pet-character.reminding {
-  animation: remind-bounce 0.8s ease-in-out infinite;
-}
-
-#pet-character.reminding .blush { opacity: 0.8; }
-
-#pet-character.reminding .ear-left {
-  transform: rotate(-3deg);
-  transition: transform 0.3s;
-}
-#pet-character.reminding .ear-right {
-  transform: rotate(3deg);
-  transition: transform 0.3s;
-}
-
-/* Alert tail */
-#pet-character.reminding .tail {
-  animation: tail-alert 0.5s ease-in-out infinite alternate;
-}
-
-/* ========== STATE: WALKING ========== */
-#pet-character.walking {
-  animation: walk-bob 0.5s ease-in-out infinite;
-}
-
-#pet-character.walking .paw-left {
-  animation: paw-step-left 0.5s ease-in-out infinite;
-}
-#pet-character.walking .paw-right {
-  animation: paw-step-right 0.5s ease-in-out infinite;
-}
-
-#pet-character.walking .tail {
-  animation: tail-walk 0.5s ease-in-out infinite;
-}
-
-/* ========== STATE: STOPPING (head tilt) ========== */
-#pet-character.stopping .head {
-  transform: translateX(-50%) rotate(-10deg);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* ========== STATE: SITTING ========== */
-#pet-character.sitting .body {
-  height: 28px;
-  width: 48px;
-  border-radius: 24px 24px 16px 16px;
-  transition: all 0.4s ease;
-}
-
-#pet-character.sitting .tail {
-  transform: rotate(15deg) scaleX(0.9);
-}
-
-/* ========== BLINK ANIMATION ========== */
-.blink .eye {
-  height: 2px !important;
-  top: 22px !important;
-  background: transparent !important;
-  overflow: visible !important;
-}
-.blink .eye::after {
-  content: '' !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 13px !important;
-  height: 3px !important;
-  border-bottom: 2px solid var(--m-dark) !important;
-  border-radius: 0 0 50% 50% !important;
-}
-.blink .pupil,
-.blink .highlight { visibility: hidden !important; }
-
-/* ========== SPEECH BUBBLE (Cloud Thought Style) ========== */
+/* ========== SPEECH BUBBLE ========== */
 #speech-bubble {
   position: absolute;
   bottom: 100%;
@@ -688,9 +201,10 @@ html, body {
 #speech-bubble.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0) scale(1);
+  animation: bubble-wobble 0.4s ease-out forwards;
 }
 
-/* Thought tail — medium circle */
+/* Thought tail circles */
 #speech-bubble::before {
   content: '';
   position: absolute;
@@ -703,8 +217,6 @@ html, body {
   border: 2px solid rgba(232,180,184,0.3);
   border-radius: 50%;
 }
-
-/* Thought tail — small circle */
 #speech-bubble::after {
   content: '';
   position: absolute;
@@ -822,6 +334,7 @@ html, body {
   margin-bottom: 10px;
   font-weight: 500;
   letter-spacing: 0.2px;
+  cursor: pointer;
 }
 .setting-emoji {
   font-size: 14px;
@@ -899,17 +412,6 @@ html, body {
   box-shadow: 0 2px 8px rgba(212,165,116,0.3);
 }
 
-/* Mode Settings (show/hide) */
-.mode-settings.hidden {
-  height: 0;
-  overflow: hidden;
-  opacity: 0;
-  margin: 0;
-  padding: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
 /* Slider */
 .setting-slider {
   display: flex;
@@ -922,7 +424,13 @@ html, body {
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
-  background: var(--m-border-medium);
+  background: linear-gradient(
+    to right,
+    var(--m-accent) 0%,
+    var(--m-accent) var(--slider-pct, 50%),
+    var(--m-border-medium) var(--slider-pct, 50%),
+    var(--m-border-medium) 100%
+  );
   border-radius: 2px;
   outline: none;
 }
@@ -1051,325 +559,7 @@ html, body {
   color: var(--m-text-muted);
 }
 
-/* ========== MOOD VISUAL (cat) ========== */
-
-/* Mood bar */
-.mood-bar {
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 32px;
-  height: 3px;
-  background: var(--m-border-medium);
-  border-radius: 2px;
-  overflow: hidden;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-}
-.mood-bar-fill {
-  height: 100%;
-  width: var(--mood-pct, 60%);
-  background: var(--m-accent);
-  border-radius: 2px;
-  transition: width 1s ease, background 0.5s ease;
-}
-
-/* Mood aura effects */
-#pet-container.mood-high .cat {
-  filter: brightness(1.06) saturate(1.08);
-}
-#pet-container.mood-high .mood-bar-fill {
-  background: var(--m-pink);
-}
-#pet-container.mood-high .blush {
-  opacity: 0.5;
-}
-#pet-container.mood-high .tail {
-  animation-duration: 1.8s !important;
-}
-
-#pet-container.mood-low .cat {
-  filter: brightness(0.93) saturate(0.88);
-}
-#pet-container.mood-low .cat-shadow {
-  opacity: 0.4;
-}
-#pet-container.mood-low .mood-bar-fill {
-  background: var(--m-text-muted);
-}
-#pet-container.mood-low .tail {
-  animation-duration: 4s !important;
-}
-
-/* ========== KEYFRAME ANIMATIONS ========== */
-
-/* Tail gentle sway */
-@keyframes tail-wag {
-  0%, 100% { transform: rotate(-8deg); }
-  50% { transform: rotate(12deg); }
-}
-
-/* Tail alert mode */
-@keyframes tail-alert {
-  0% { transform: rotate(-20deg) scaleY(1.1); }
-  100% { transform: rotate(-5deg) scaleY(1.1); }
-}
-
-/* Tail walking sway */
-@keyframes tail-walk {
-  0%, 100% { transform: rotate(-15deg); }
-  50% { transform: rotate(18deg); }
-}
-
-/* Walking bounce */
-@keyframes walk-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-/* Paw stepping alternation */
-@keyframes paw-step-left {
-  0%, 100% { transform: translateY(0); }
-  25% { transform: translateY(-2px); }
-}
-@keyframes paw-step-right {
-  0%, 100% { transform: translateY(0); }
-  75% { transform: translateY(-2px); }
-}
-
-/* Remind bounce */
-@keyframes remind-bounce {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-4px) scale(1.03); }
-}
-
-/* Heart float */
-@keyframes float-heart {
-  0% {
-    transform: translateX(-50%) translateY(0) scale(0.5);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-50%) translateY(-28px) scale(1.1);
-    opacity: 0;
-  }
-}
-
-/* Sleeping zzz */
-@keyframes zzz {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50% { opacity: 0.8; transform: translateY(-3px); }
-}
-
-/* Idle breathing */
-@keyframes breathe {
-  0%, 100% { transform: translateX(-50%) scaleY(1); }
-  50% { transform: translateX(-50%) scaleY(1.02); }
-}
-
-/* Sleep breathing (slower) */
-@keyframes sleep-breathe {
-  0%, 100% { transform: translateX(-50%) scaleY(1); }
-  50% { transform: translateX(-50%) scaleY(1.03); }
-}
-
-/* Ear twitch */
-@keyframes ear-twitch {
-  0%, 100% { transform: rotate(-8deg); }
-  25% { transform: rotate(-14deg); }
-  50% { transform: rotate(-6deg); }
-  75% { transform: rotate(-10deg); }
-}
-
-/* Wiggle (click reaction) */
-@keyframes wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  20% { transform: rotate(-6deg); }
-  40% { transform: rotate(6deg); }
-  60% { transform: rotate(-4deg); }
-  80% { transform: rotate(4deg); }
-}
-
-/* ========== STATE: ANNOYED (4+ rapid clicks) ========== */
-
-/* Flat ears */
-#pet-character.annoyed .ear-left {
-  transform: rotate(15deg) translateX(-3px) translateY(2px);
-  transition: transform 0.3s ease;
-}
-#pet-character.annoyed .ear-right {
-  transform: rotate(-15deg) translateX(3px) translateY(2px);
-  transition: transform 0.3s ease;
-}
-
-/* Squinted eyes (disapproving look) */
-#pet-character.annoyed .eye {
-  height: 6px;
-  top: 20px;
-  background: transparent;
-  overflow: visible;
-}
-#pet-character.annoyed .eye::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 13px;
-  height: 6px;
-  border-top: 2.5px solid var(--m-dark);
-  border-radius: 50% 50% 0 0;
-}
-#pet-character.annoyed .pupil,
-#pet-character.annoyed .highlight { display: none; }
-
-/* Fast tail flick (irritated) */
-#pet-character.annoyed .tail {
-  animation: tail-annoyed 0.3s ease-in-out infinite alternate;
-}
-
-@keyframes tail-annoyed {
-  0% { transform: rotate(-25deg); }
-  100% { transform: rotate(25deg); }
-}
-
-/* Slight body lean away */
-#pet-character.annoyed .body {
-  transform: translateX(-50%) translateX(3px);
-}
-
-/* ========== STATE: SURPRISED (3 rapid clicks) ========== */
-
-/* Bigger eyes */
-#pet-character.surprised .eye {
-  width: 15px;
-  height: 16px;
-  transition: all 0.15s ease;
-}
-#pet-character.surprised .eye-left { left: 7px; }
-#pet-character.surprised .eye-right { right: 7px; }
-#pet-character.surprised .highlight-main {
-  width: 6px;
-  height: 6px;
-}
-
-/* Ears perk up higher */
-#pet-character.surprised .ear-left {
-  transform: rotate(-18deg) translateY(-3px);
-  transition: transform 0.15s ease;
-}
-#pet-character.surprised .ear-right {
-  transform: rotate(18deg) translateY(-3px);
-  transition: transform 0.15s ease;
-}
-
-/* ========== IDLE MICRO-ANIMATIONS ========== */
-
-/* Nose twitch */
-@keyframes nose-twitch {
-  0%, 100% { transform: translateX(-50%) scaleX(1); }
-  25% { transform: translateX(-50%) scaleX(1.15) translateX(1px); }
-  50% { transform: translateX(-50%) scaleX(0.95); }
-  75% { transform: translateX(-50%) scaleX(1.1) translateX(-1px); }
-}
-.nose-twitch .nose {
-  animation: nose-twitch 0.4s ease;
-}
-
-/* Paw stretch (wake up) */
-@keyframes paw-stretch {
-  0% { transform: translateY(0); }
-  30% { transform: translateY(2px) scaleX(1.3); }
-  60% { transform: translateY(-1px); }
-  100% { transform: translateY(0) scaleX(1); }
-}
-.paw-stretch .paw-left,
-.paw-stretch .paw-right {
-  animation: paw-stretch 0.6s ease;
-}
-
-/* Ear flick reaction */
-@keyframes ear-flick-left {
-  0%, 100% { transform: rotate(-8deg); }
-  40% { transform: rotate(-18deg); }
-  70% { transform: rotate(-5deg); }
-}
-@keyframes ear-flick-right {
-  0%, 100% { transform: rotate(8deg); }
-  40% { transform: rotate(18deg); }
-  70% { transform: rotate(5deg); }
-}
-
-/* ========== INTRO HINT (pulse ring) ========== */
-.intro-hint::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 110px;
-  height: 110px;
-  border: 2px solid var(--m-pink);
-  border-radius: 50%;
-  animation: pulse-ring 1.5s ease-out infinite;
-  pointer-events: none;
-  z-index: 4;
-}
-@keyframes pulse-ring {
-  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
-  100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
-}
-
-/* ========== SPEECH BUBBLE ENHANCEMENTS ========== */
-@keyframes bubble-wobble {
-  0% { transform: translateX(-50%) translateY(8px) scale(0.85) rotate(-2deg); }
-  40% { transform: translateX(-50%) translateY(-2px) scale(1.04) rotate(1.5deg); }
-  70% { transform: translateX(-50%) translateY(1px) scale(0.98) rotate(-0.5deg); }
-  100% { transform: translateX(-50%) translateY(0) scale(1) rotate(0deg); }
-}
-#speech-bubble.show {
-  animation: bubble-wobble 0.4s ease-out forwards;
-}
-
-/* ========== FAREWELL ANIMATION ========== */
-#pet-container.farewell {
-  transition: opacity 1s ease-in 0.6s, transform 1s ease-in 0.6s !important;
-  opacity: 0.4 !important;
-  transform: scale(0.85) translateY(10px) !important;
-}
-#pet-container.farewell #pet-character {
-  animation: farewell-wave 0.6s ease infinite;
-}
-@keyframes farewell-wave {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(5deg); }
-  75% { transform: rotate(-5deg); }
-}
-
-/* ========== SETTINGS PANEL ENHANCEMENTS ========== */
-
-/* Button ripple */
-.mode-btn.ripple,
-.personality-btn.ripple {
-  animation: btn-ripple 0.45s ease-out;
-}
-@keyframes btn-ripple {
-  0% { box-shadow: 0 0 0 0 rgba(212,165,116,0.4); }
-  100% { box-shadow: 0 0 0 10px rgba(212,165,116,0); }
-}
-
-/* Slider filled track */
-.setting-slider input[type="range"] {
-  background: linear-gradient(
-    to right,
-    var(--m-accent) 0%,
-    var(--m-accent) var(--slider-pct, 50%),
-    var(--m-border-medium) var(--slider-pct, 50%),
-    var(--m-border-medium) 100%
-  );
-}
-
-/* Collapsible setting groups */
+/* ========== COLLAPSIBLE SECTIONS ========== */
 .setting-content {
   max-height: 200px;
   overflow: hidden;
@@ -1391,7 +581,115 @@ html, body {
 .setting-label.open .collapse-arrow {
   transform: rotate(180deg);
 }
-.setting-label {
-  cursor: pointer;
+
+/* ========== KEYFRAME ANIMATIONS ========== */
+
+/* Wiggle (click reaction) */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-6deg); }
+  40% { transform: rotate(6deg); }
+  60% { transform: rotate(-4deg); }
+  80% { transform: rotate(4deg); }
 }
 
+/* Bubble wobble in */
+@keyframes bubble-wobble {
+  0% { transform: translateX(-50%) translateY(8px) scale(0.85) rotate(-2deg); }
+  40% { transform: translateX(-50%) translateY(-2px) scale(1.04) rotate(1.5deg); }
+  70% { transform: translateX(-50%) translateY(1px) scale(0.98) rotate(-0.5deg); }
+  100% { transform: translateX(-50%) translateY(0) scale(1) rotate(0deg); }
+}
+
+/* Farewell */
+#pet-container.farewell {
+  transition: opacity 1s ease-in 0.6s, transform 1s ease-in 0.6s !important;
+  opacity: 0.4 !important;
+  transform: scale(0.85) translateY(10px) !important;
+}
+#pet-container.farewell #pet-character {
+  animation: farewell-wave 0.6s ease infinite;
+}
+@keyframes farewell-wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+/* Button ripple */
+.mode-btn.ripple,
+.personality-btn.ripple {
+  animation: btn-ripple 0.45s ease-out;
+}
+@keyframes btn-ripple {
+  0% { box-shadow: 0 0 0 0 rgba(212,165,116,0.4); }
+  100% { box-shadow: 0 0 0 10px rgba(212,165,116,0); }
+}
+
+/* ========== PERSONALITY VISUAL EFFECTS ========== */
+
+/* Clingy - warm pink glow, pink-tinted bubble */
+#pet-container.personality-clingy #pet-character {
+  filter: drop-shadow(0 0 8px rgba(232,180,184,0.3));
+}
+#pet-container.personality-clingy #speech-bubble {
+  border-color: rgba(232,180,184,0.4);
+  box-shadow: 0 3px 16px rgba(232,180,184,0.15);
+}
+
+/* Tsundere - cool toned, no extra glow */
+#pet-container.personality-tsundere #pet-character {
+  filter: drop-shadow(0 0 6px rgba(139,126,114,0.15));
+}
+#pet-container.personality-tsundere #speech-bubble {
+  border-color: rgba(139,126,114,0.25);
+}
+
+/* Energetic - golden sparkle, bouncy feel */
+#pet-container.personality-energetic #pet-character {
+  filter: drop-shadow(0 0 10px rgba(212,165,116,0.35));
+}
+#pet-container.personality-energetic #speech-bubble {
+  border-color: rgba(212,165,116,0.4);
+  box-shadow: 0 3px 16px rgba(212,165,116,0.15);
+}
+
+/* Dramatic - spotlight effect, theatrical glow */
+#pet-container.personality-dramatic #pet-character {
+  filter: drop-shadow(0 0 12px rgba(232,180,184,0.4));
+}
+#pet-container.personality-dramatic #speech-bubble {
+  border-color: rgba(232,180,184,0.5);
+  box-shadow: 0 3px 20px rgba(232,180,184,0.2);
+}
+
+/* ========== INTRO HINT (pulse ring) ========== */
+.intro-hint::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  height: 160px;
+  border: 2px solid var(--m-pink);
+  border-radius: 50%;
+  animation: pulse-ring 1.5s ease-out infinite;
+  pointer-events: none;
+  z-index: 4;
+}
+@keyframes pulse-ring {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+}
+
+/* ========== PAW STRETCH (wake up) ========== */
+#pet-character.paw-stretch {
+  animation: stretch-wake 0.6s ease;
+}
+@keyframes stretch-wake {
+  0% { transform: scaleX(1) scaleY(1); }
+  30% { transform: scaleX(1.08) scaleY(0.95); }
+  60% { transform: scaleX(0.97) scaleY(1.03); }
+  100% { transform: scaleX(1) scaleY(1); }
+}

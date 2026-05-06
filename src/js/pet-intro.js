@@ -68,14 +68,10 @@
 
     // Startled jump
     this._introPhase = 'startled';
-    var baseTransform = this._facingLeft ? 'scaleX(-1)' : '';
-    this.character.style.transform = baseTransform + ' translateY(-30px) scale(1.1)';
-    this.character.classList.add('surprised');
+    this.setState('surprised');
     this.showBubble('\uFF01\uFF01', true);
 
     this._setTimer('state', () => {
-      this.character.style.transform = baseTransform;
-      this.character.classList.remove('surprised');
       this.hideBubble();
 
       // Run away to the right
@@ -85,7 +81,7 @@
         // Peek back
         this._introPhase = 'peeking_back';
         this._facingLeft = true;
-        this.character.style.transform = 'scaleX(-1)';
+        this.sprite.setFlip(true);
         this.setState('sitting');
         this.showBubble(this._getTexts().introText);
 

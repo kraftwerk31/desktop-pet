@@ -45,10 +45,8 @@
   };
 
   // Health reminder sliders
-  var restSlider = document.getElementById('rest-interval');
-  var restValue = document.getElementById('rest-value');
-  var standSlider = document.getElementById('stand-interval');
-  var standValue = document.getElementById('stand-value');
+  var breakSlider = document.getElementById('break-interval');
+  var breakValue = document.getElementById('break-value');
   var waterSlider = document.getElementById('water-interval');
   var waterValue = document.getElementById('water-value');
 
@@ -89,15 +87,10 @@
     }
   }
 
-  if (saved.restInterval != null && restSlider) {
-    restSlider.value = saved.restInterval;
-    restValue.textContent = saved.restInterval + '\u5206\u949F';
-    pet.setRestInterval(saved.restInterval);
-  }
-  if (saved.standInterval != null && standSlider) {
-    standSlider.value = saved.standInterval;
-    standValue.textContent = saved.standInterval + '\u5206\u949F';
-    pet.setStandInterval(saved.standInterval);
+  if (saved.breakInterval != null && breakSlider) {
+    breakSlider.value = saved.breakInterval;
+    breakValue.textContent = saved.breakInterval + '\u5206\u949F';
+    pet.setBreakInterval(saved.breakInterval);
   }
   if (saved.waterInterval != null && waterSlider) {
     waterSlider.value = saved.waterInterval;
@@ -203,7 +196,7 @@
     slider.style.setProperty('--slider-pct', pct + '%');
   }
 
-  [restSlider, standSlider, waterSlider].forEach(function (s) {
+  [breakSlider, waterSlider].forEach(function (s) {
     updateSliderTrack(s);
   });
 
@@ -235,23 +228,13 @@
 
   // --- Health Reminder Sliders ---
 
-  if (restSlider) {
-    restSlider.addEventListener('input', function () {
-      var minutes = parseInt(restSlider.value, 10);
-      restValue.textContent = minutes + '\u5206\u949F';
-      pet.setRestInterval(minutes);
-      saveSettings({ restInterval: minutes });
-      updateSliderTrack(restSlider);
-    });
-  }
-
-  if (standSlider) {
-    standSlider.addEventListener('input', function () {
-      var minutes = parseInt(standSlider.value, 10);
-      standValue.textContent = minutes + '\u5206\u949F';
-      pet.setStandInterval(minutes);
-      saveSettings({ standInterval: minutes });
-      updateSliderTrack(standSlider);
+  if (breakSlider) {
+    breakSlider.addEventListener('input', function () {
+      var minutes = parseInt(breakSlider.value, 10);
+      breakValue.textContent = minutes + '\u5206\u949F';
+      pet.setBreakInterval(minutes);
+      saveSettings({ breakInterval: minutes });
+      updateSliderTrack(breakSlider);
     });
   }
 

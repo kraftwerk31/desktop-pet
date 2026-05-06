@@ -43,7 +43,7 @@
     var distance = Math.abs(targetX - this.x);
     var duration = Math.max(distance / effectiveSpeed, 600);
     this._facingLeft = targetX < this.x;
-    this.character.style.transform = this._facingLeft ? 'scaleX(-1)' : '';
+    this.sprite.setFlip(this._facingLeft);
     this.container.style.transition = 'left ' + duration + 'ms ease-in-out';
     this.container.style.left = targetX + 'px';
     this.x = targetX;
@@ -65,7 +65,7 @@
     var distance = Math.sqrt(dx * dx + dy * dy);
     var duration = Math.max(distance / effectiveSpeed, 600);
     this._facingLeft = targetX < this.x;
-    this.character.style.transform = this._facingLeft ? 'scaleX(-1)' : '';
+    this.sprite.setFlip(this._facingLeft);
     this.container.style.transition = 'left ' + duration + 'ms ease-in-out, top ' + duration + 'ms ease-in-out';
     this.container.style.left = targetX + 'px';
     this.container.style.top = targetY + 'px';
@@ -86,14 +86,13 @@
     var dy = Math.abs(targetY - this.y);
     var duration = Math.max(dy / (this.verticalSpeed * 4), 300);
     // Brief jump arc
-    this.character.style.transform = (this._facingLeft ? 'scaleX(-1) ' : '') + 'translateY(-10px)';
+    this.sprite.setFlip(this._facingLeft);
     this.container.style.transition = 'top ' + duration + 'ms cubic-bezier(0.34, 1.56, 0.64, 1)';
     this.container.style.top = targetY + 'px';
     this.container.style.bottom = 'auto';
     this.y = targetY;
     this._clearTimer('state');
     this._setTimer('state', () => {
-      this.character.style.transform = this._facingLeft ? 'scaleX(-1)' : '';
       this.container.style.transition = '';
       if (onArrive) onArrive();
       else { this.setState('idle'); this.scheduleNextAction(); }
@@ -241,7 +240,7 @@
         this.hideBubble();
       });
       this._facingLeft = endX < startX;
-      this.character.style.transform = this._facingLeft ? 'scaleX(-1)' : '';
+      this.sprite.setFlip(this._facingLeft);
       var effectiveSpeed = this._getEffectiveSpeed();
       var distance = Math.abs(endX - startX);
       var duration = Math.max(distance / effectiveSpeed, 600);

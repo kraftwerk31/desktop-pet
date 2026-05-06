@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="140" viewBox="0 0 120 140">
+  <!-- Tail (flicking to the side, agitated) -->
+  <path d="M26 100 Q8 100 6 85 Q4 72 14 76 Q20 78 16 88 Q12 96 28 96" fill="#D4A574" stroke="#C49668" stroke-width="1"/>
+  <path d="M8 82 Q10 74 16 76" stroke="#C49668" stroke-width="1.2" fill="none"/>
+  <!-- Body -->
+  <ellipse cx="58" cy="95" rx="28" ry="24" fill="#D4A574"/>
+  <!-- Belly -->
+  <ellipse cx="60" cy="100" rx="16" ry="18" fill="#F5EDE4"/>
+  <!-- Body stripes -->
+  <path d="M42 82 Q48 78 54 82" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M38 88 Q45 84 52 88" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M40 94 Q47 91 54 94" stroke="#C49668" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- Back left leg -->
+  <ellipse cx="42" cy="116" rx="8" ry="6" fill="#D4A574"/>
+  <ellipse cx="42" cy="119" rx="7" ry="3" fill="#E8C9A8"/>
+  <circle cx="38" cy="120" r="1.5" fill="#E8B4B8"/>
+  <circle cx="42" cy="121" r="1.5" fill="#E8B4B8"/>
+  <circle cx="46" cy="120" r="1.5" fill="#E8B4B8"/>
+  <!-- Back right leg -->
+  <ellipse cx="72" cy="116" rx="8" ry="6" fill="#B8845A"/>
+  <ellipse cx="72" cy="119" rx="7" ry="3" fill="#D4A574"/>
+  <circle cx="68" cy="120" r="1.5" fill="#E8B4B8"/>
+  <circle cx="72" cy="121" r="1.5" fill="#E8B4B8"/>
+  <circle cx="76" cy="120" r="1.5" fill="#E8B4B8"/>
+  <!-- Front left leg -->
+  <rect x="44" y="104" width="9" height="14" rx="4" fill="#D4A574"/>
+  <ellipse cx="48" cy="119" rx="6" ry="3" fill="#E8C9A8"/>
+  <circle cx="45" cy="120" r="1.3" fill="#E8B4B8"/>
+  <circle cx="48" cy="121" r="1.3" fill="#E8B4B8"/>
+  <circle cx="51" cy="120" r="1.3" fill="#E8B4B8"/>
+  <!-- Front right leg -->
+  <rect x="62" y="104" width="9" height="14" rx="4" fill="#B8845A"/>
+  <ellipse cx="66" cy="119" rx="6" ry="3" fill="#D4A574"/>
+  <circle cx="63" cy="120" r="1.3" fill="#E8B4B8"/>
+  <circle cx="66" cy="121" r="1.3" fill="#E8B4B8"/>
+  <circle cx="69" cy="120" r="1.3" fill="#E8B4B8"/>
+  <!-- Head -->
+  <ellipse cx="60" cy="55" rx="26" ry="24" fill="#D4A574"/>
+  <!-- Cheek blush (subtle, annoyed) -->
+  <ellipse cx="40" cy="60" rx="5" ry="3" fill="#E8B4B8" opacity="0.3"/>
+  <ellipse cx="80" cy="60" rx="5" ry="3" fill="#E8B4B8" opacity="0.3"/>
+  <!-- M-mark -->
+  <path d="M48 40 L52 34 L56 40" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M56 40 L60 34 L64 40" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M64 40 L68 34 L72 40" stroke="#C49668" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Left ear (FLAT - sideways) -->
+  <path d="M34 52 L18 46 L40 44" fill="#D4A574"/>
+  <path d="M34 50 L22 46 L40 45" fill="#E8B4B8"/>
+  <!-- Right ear (FLAT - sideways) -->
+  <path d="M86 52 L102 46 L80 44" fill="#D4A574"/>
+  <path d="M86 50 L98 46 L80 45" fill="#E8B4B8"/>
+  <!-- Left eye (half-moon / disapproval - flat on top, curved on bottom) -->
+  <path d="M44 54 Q50 60 56 54 Q50 56 44 54" fill="#4A3F35"/>
+  <!-- Right eye (half-moon / disapproval) -->
+  <path d="M64 54 Q70 60 76 54 Q70 56 64 54" fill="#4A3F35"/>
+  <!-- Nose -->
+  <path d="M58 62 L60 64 L62 62" fill="#D4918A" stroke="#D4918A" stroke-width="0.5" stroke-linejoin="round"/>
+  <!-- Mouth (flat/displeased line) -->
+  <line x1="55" y1="67" x2="65" y2="67" stroke="#4A3F35" stroke-width="1" stroke-linecap="round"/>
+  <!-- Whiskers left -->
+  <line x1="44" y1="60" x2="28" y2="58" stroke="#4A3F35" stroke-width="0.7"/>
+  <line x1="44" y1="62" x2="28" y2="64" stroke="#4A3F35" stroke-width="0.7"/>
+  <line x1="44" y1="64" x2="29" y2="70" stroke="#4A3F35" stroke-width="0.7"/>
+  <!-- Whiskers right -->
+  <line x1="76" y1="60" x2="92" y2="58" stroke="#4A3F35" stroke-width="0.7"/>
+  <line x1="76" y1="62" x2="92" y2="64" stroke="#4A3F35" stroke-width="0.7"/>
+  <line x1="76" y1="64" x2="91" y2="70" stroke="#4A3F35" stroke-width="0.7"/>
+  <!-- Annoyed mark -->
+  <path d="M85 40 L89 36" stroke="#B8845A" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M87 42 L92 40" stroke="#B8845A" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
