@@ -508,10 +508,10 @@ class PetEngine {
       }
       if (perfRoll < surprisedThreshold) {
         this.setState('surprised');
-        var surprisePool = [
-          '？！',
-          '（竖起耳朵）',
-          '（突然警觉）',
+        var surprisePool = this._getTexts().surprised || [
+          '!',
+          '(ears perk up)',
+          '(suddenly alert)',
         ];
         this.showBubble(pickRandom(surprisePool), true);
         this._setTimer('state', () => {
@@ -523,10 +523,10 @@ class PetEngine {
       }
       if (perfRoll < annoyedThreshold) {
         this.setState('annoyed');
-        var annoyPool = [
-          '啧。',
-          '（甩尾巴）',
-          '（撇头）',
+        var annoyPool = this._getTexts().annoyed || [
+          'Hmph.',
+          '(tail flick)',
+          '(looks away)',
         ];
         this.showBubble(pickRandom(annoyPool), true);
         this._setTimer('state', () => {
@@ -875,7 +875,9 @@ class PetEngine {
 
   _showStatsBubble() {
     var stats = this.growth.getStats();
-    var text = '\u{1F4C5} ' + stats.consecutiveDays + '\u5929 \u00B7 ' + stats.bondTitle + ' \u00B7 ' + stats.totalInteractions + '\u6B21';
+    var text = window.DesktopPetI18n
+      ? window.DesktopPetI18n.statsBubble(stats)
+      : '\u{1F4C5} ' + stats.consecutiveDays + '\u5929 \u00B7 ' + stats.bondTitle + ' \u00B7 ' + stats.totalInteractions + '\u6B21';
 
     if (this.mode === 'reminder') {
       this._popInForReminder(() => {

@@ -32,7 +32,7 @@
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
-        设置
+        <span id="settings-title-text">设置</span>
       </span>
       <button id="settings-close" class="settings-close-btn">&times;</button>
     </div>
@@ -40,7 +40,7 @@
     <div class="settings-body">
       <!-- Mode Selection -->
       <div class="setting-group">
-        <label class="setting-label">
+        <label class="setting-label" id="mode-label">
           <span class="setting-emoji">🐾</span>
           模式选择
         </label>
@@ -53,7 +53,7 @@
 
       <!-- Personality Selection -->
       <div class="setting-group">
-        <label class="setting-label">
+        <label class="setting-label" id="personality-label">
           <span class="setting-emoji">🐱</span>
           性格选择
         </label>
@@ -66,16 +66,30 @@
         <p id="personality-desc" class="mode-description">你就是我的一切！不要离开我~</p>
       </div>
 
+      <!-- Language Selection -->
+      <div class="setting-group">
+        <label class="setting-label" id="language-label">
+          <span class="setting-emoji">&#127760;</span>
+          语言
+        </label>
+        <select id="language-select" class="setting-select" aria-label="Language">
+          <option value="zh-CN">中文</option>
+          <option value="en">English</option>
+          <option value="ja">日本語</option>
+          <option value="es">Español</option>
+        </select>
+      </div>
+
       <!-- Health Reminder Settings -->
       <div class="setting-group">
-        <label class="setting-label open" data-target="health-content">
+        <label class="setting-label open" id="health-label" data-target="health-content">
           <span class="setting-emoji">💤</span>
           健康提醒
           <span class="collapse-arrow">▼</span>
         </label>
         <div class="setting-content" id="health-content">
           <div class="setting-group" style="margin-bottom:10px">
-            <label class="setting-label" style="cursor:default">
+            <label class="setting-label" id="break-label" style="cursor:default">
               <span class="setting-emoji" style="font-size:12px">💤</span>
               休息活动
             </label>
@@ -85,7 +99,7 @@
             </div>
           </div>
           <div class="setting-group" style="margin-bottom:0">
-            <label class="setting-label" style="cursor:default">
+            <label class="setting-label" id="water-label" style="cursor:default">
               <span class="setting-emoji" style="font-size:12px">💧</span>
               喝水提醒
             </label>
@@ -99,7 +113,7 @@
 
       <!-- General Settings -->
       <div class="setting-group">
-        <label class="setting-label">
+        <label class="setting-label" id="general-label">
           <span class="setting-emoji">&#9881;</span>
           通用设置
         </label>
@@ -136,7 +150,7 @@
 
       <!-- Analytics -->
       <div class="setting-group analytics-section">
-        <label class="setting-label">
+        <label class="setting-label" id="analytics-label">
           <span class="setting-emoji">&#128202;</span>
           今日数据
         </label>
@@ -164,6 +178,7 @@
 
   <!-- Scripts -->
   <script src="js/personalities.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/growth.js"></script>
   <script src="js/sprite-manager.js"></script>
   <script src="js/pet.js"></script>

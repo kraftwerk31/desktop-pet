@@ -5,6 +5,58 @@ let mainWindow = null;
 let tray = null;
 let isPaused = false;
 let currentMode = 'companion';
+let currentLanguage = 'zh-CN';
+
+const TRAY_I18N = {
+  'zh-CN': {
+    title: '🐾 桌面宠物',
+    pause: '⏸ 暂停',
+    resume: '▶ 恢复',
+    companion: '🐾 陪伴模式',
+    reminder: '🔔 提醒模式',
+    settings: '⚙ 设置...',
+    stats: '📊 打卡',
+    quit: '👋 再见~',
+    tooltip: '桌面宠物 - 你的小伙伴',
+  },
+  en: {
+    title: '🐾 Desktop Pet',
+    pause: '⏸ Pause',
+    resume: '▶ Resume',
+    companion: '🐾 Companion mode',
+    reminder: '🔔 Reminder mode',
+    settings: '⚙ Settings...',
+    stats: '📊 Check-in',
+    quit: '👋 Bye~',
+    tooltip: 'Desktop Pet - Your little companion',
+  },
+  ja: {
+    title: '🐾 デスクトップペット',
+    pause: '⏸ 一時停止',
+    resume: '▶ 再開',
+    companion: '🐾 相棒モード',
+    reminder: '🔔 通知モード',
+    settings: '⚙ 設定...',
+    stats: '📊 記録',
+    quit: '👋 またね~',
+    tooltip: 'デスクトップペット - 小さな相棒',
+  },
+  es: {
+    title: '🐾 Mascota de escritorio',
+    pause: '⏸ Pausar',
+    resume: '▶ Reanudar',
+    companion: '🐾 Modo compañía',
+    reminder: '🔔 Modo recordatorio',
+    settings: '⚙ Ajustes...',
+    stats: '📊 Registro',
+    quit: '👋 Adiós~',
+    tooltip: 'Mascota de escritorio - Tu pequeña compañía',
+  },
+};
+
+function trayText() {
+  return TRAY_I18N[currentLanguage] || TRAY_I18N['zh-CN'];
+}
 
 // Tray icon: simple cat face (16x16)
 function createTrayIcon() {
@@ -111,11 +163,12 @@ function createPetWindow() {
 }
 
 function buildTrayMenu() {
+  const t = trayText();
   return Menu.buildFromTemplate([
-    { label: '\u{1F43E} 桌面宠物', enabled: false },
+    { label: t.title, enabled: false },
     { type: 'separator' },
     {
-      label: isPaused ? '\u25B6 恢复' : '\u23F8 暂停',
+      label: isPaused ? t.resume : t.pause,
       click: () => {
         isPaused = !isPaused;
         if (mainWindow) mainWindow.webContents.send('toggle-pause', isPaused);
@@ -124,38 +177,41 @@ function buildTrayMenu() {
     },
     { type: 'separator' },
     {
-      label: '\u{1F43E} 陪伴模式',
+      label: t.companion,
       type: 'radio',
       checked: currentMode === 'companion',
       click: () => { setMode('companion'); },
     },
     {
-      label: '\u{1F514} 提醒模式',
+      label: t.reminder,
       type: 'radio',
       checked: currentMode === 'reminder',
       click: () => { setMode('reminder'); },
     },
     { type: 'separator' },
     {
-      label: '\u2699 设置...',
+      label: t.settings,
       click: () => { openSettings(); },
     },
     {
-      label: '\u{1F4CA} 打卡',
+      label: t.stats,
       click: () => {
         if (mainWindow) mainWindow.webContents.send('show-stats');
       },
     },
     { type: 'separator' },
     {
-      label: '\u{1F44B} 再见~',
+      label: t.quit,
       click: () => { app.quit(); },
     },
   ]);
 }
 
 function updateTray() {
-  if (tray) tray.setContextMenu(buildTrayMenu());
+  if (tray) {
+    tray.setToolTip(trayText().tooltip);
+    tray.setContextMenu(buildTrayMenu());
+  }
 }
 
 function setMode(mode) {
@@ -198,6 +254,13 @@ ipcMain.handle('get-auto-start', () => {
   }).openAtLogin;
 });
 
+ipcMain.on('set-language', (_event, language) => {
+  if (TRAY_I18N[language]) {
+    currentLanguage = language;
+    updateTray();
+  }
+});
+
 ipcMain.on('quit-app', () => {
   app.quit();
 });
@@ -208,8 +271,7 @@ app.whenReady().then(() => {
   createPetWindow();
 
   tray = new Tray(createTrayIcon());
-  tray.setToolTip('桌面宠物 - 你的小伙伴');
-  tray.setContextMenu(buildTrayMenu());
+  updateTray();
 
   // Double-click tray to toggle pause
   tray.on('double-click', () => {

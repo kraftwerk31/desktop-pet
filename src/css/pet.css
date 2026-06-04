@@ -381,6 +381,28 @@ html, body {
   box-shadow: 0 2px 8px rgba(212,165,116,0.3);
 }
 
+/* Language Select */
+.setting-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--m-border-medium);
+  background: rgba(255,253,250,0.72);
+  color: var(--m-text-primary);
+  border-radius: var(--m-radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.setting-select:hover,
+.setting-select:focus {
+  border-color: var(--m-accent);
+  background: var(--m-bg-card);
+  box-shadow: 0 2px 8px rgba(212,165,116,0.18);
+}
+
 /* Personality Buttons (2x2 grid) */
 .personality-btns {
   display: grid;
