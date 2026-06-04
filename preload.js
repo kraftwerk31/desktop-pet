@@ -34,4 +34,5 @@ contextBridge.exposeInMainWorld('petAPI', {
 
   // Auto-start
   setAutoStart: (enabled) => ipcRenderer.send('set-auto-start', enabled),
+  getAutoStart: () => ipcRenderer.invoke('get-auto-start'),
 });

@@ -117,6 +117,14 @@
   // --- Auto-start toggle ---
   if (autoStartToggle) {
     autoStartToggle.checked = !!saved.autoStart;
+    if (window.petAPI.getAutoStart) {
+      window.petAPI.getAutoStart().then(function (enabled) {
+        autoStartToggle.checked = !!enabled;
+        saveSettings({ autoStart: !!enabled });
+      }).catch(function () {
+        autoStartToggle.checked = !!saved.autoStart;
+      });
+    }
     autoStartToggle.addEventListener('change', function () {
       var enabled = autoStartToggle.checked;
       window.petAPI.setAutoStart(enabled);

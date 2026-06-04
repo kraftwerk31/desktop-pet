@@ -186,7 +186,16 @@ ipcMain.on('set-focusable', (_event, focusable) => {
 });
 
 ipcMain.on('set-auto-start', (_event, enabled) => {
-  app.setLoginItemSettings({ openAtLogin: enabled });
+  app.setLoginItemSettings({
+    openAtLogin: !!enabled,
+    path: process.execPath,
+  });
+});
+
+ipcMain.handle('get-auto-start', () => {
+  return app.getLoginItemSettings({
+    path: process.execPath,
+  }).openAtLogin;
 });
 
 ipcMain.on('quit-app', () => {
