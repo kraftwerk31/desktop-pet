@@ -1,6 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('petAPI', {
+  initializeSettings: (legacy) => ipcRenderer.invoke('initialize-settings', legacy),
+  setMode: (mode) => ipcRenderer.invoke('set-mode', mode),
+  selectDisplay: (id) => ipcRenderer.invoke('select-display', id),
+  autoStart: (enabled) => ipcRenderer.invoke('auto-start', enabled),
+  onDisplaysChanged: (callback) => ipcRenderer.on('displays-changed', (_event, data) => callback(data)),
+  onSuspend: (callback) => ipcRenderer.on('system-suspend', () => callback()),
+  onResume: (callback) => ipcRenderer.on('system-resume', () => callback()),
   // Renderer → Main
   setIgnoreMouseEvents: (ignore) => ipcRenderer.send('set-ignore-mouse-events', ignore),
   setFocusable: (focusable) => ipcRenderer.send('set-focusable', focusable),

@@ -15,9 +15,9 @@ class GrowthManager {
   static MOOD_DAILY_START = 60;
   static MOOD_CLICK = 3;
   static MOOD_REMINDER_ACCEPT = 8;
-  static MOOD_REMINDER_IGNORE = -8;
+  static MOOD_REMINDER_IGNORE = 0;
   static MOOD_DRAG = 2;
-  static MOOD_DECAY_AMOUNT = -3;
+  static MOOD_DECAY_AMOUNT = 0;
   static MOOD_DECAY_IDLE_THRESHOLD = 30 * 60 * 1000;
   static MOOD_DECAY_CHECK_INTERVAL = 10 * 60 * 1000;
   static MOOD_NATURAL_RECOVERY = 1;
@@ -64,7 +64,8 @@ class GrowthManager {
   }
 
   _today() {
-    return new Date().toISOString().split('T')[0];
+    const d = new Date();
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
   }
 
   save() {
@@ -98,16 +99,19 @@ class GrowthManager {
   isNewDay() { return this._isNewDay; }
 
   recordInteraction() {
+    this.ensureDay();
     this.data.totalInteractions++;
     this.save();
   }
 
   recordReminderAccepted() {
+    this.ensureDay();
     this.data.totalRemindersAccepted++;
     this.save();
   }
 
   recordReminderIgnored() {
+    this.ensureDay();
     this.data.totalRemindersIgnored++;
     this.save();
   }
@@ -122,7 +126,7 @@ class GrowthManager {
   }
 
   getBondLevel() {
-    const d = this.data.consecutiveDays;
+    const d = this.data.totalDays;
     if (d >= 30) return 5;
     if (d >= 14) return 4;
     if (d >= 7) return 3;
@@ -137,7 +141,7 @@ class GrowthManager {
   checkMilestones() {
     const pending = [];
     const shown = this.data.milestonesShown;
-    const days = this.data.consecutiveDays;
+    const days = this.data.totalDays;
     const interactions = this.data.totalInteractions;
 
     const dayMilestones = { 3: 'day3', 7: 'day7', 14: 'day14', 30: 'day30' };
@@ -160,6 +164,7 @@ class GrowthManager {
   }
 
   getStats() {
+    this.ensureDay();
     return {
       consecutiveDays: this.data.consecutiveDays,
       totalDays: this.data.totalDays,
@@ -215,10 +220,31 @@ class GrowthManager {
 
   // ========== ANALYTICS SYSTEM ==========
 
-  startSession() {
+  ensureDay() {
+    const today = this._today();
+    let session = this.data.analytics.currentSession;
+    // Split a running session at each local midnight, including DST days.
+    while (session && session.date < today) {
+      const midnight = new Date(session.date + 'T00:00:00');
+      midnight.setDate(midnight.getDate() + 1);
+      const boundary = midnight.getTime();
+      if (!Number.isFinite(boundary)) break;
+      this.endSession(boundary, false);
+      this.startSession(boundary);
+      session = this.data.analytics.currentSession;
+    }
+    if (this.data.lastActiveDate !== today) this._isNewDay = this._checkNewDay();
+  }
+
+  startSession(timestamp = Date.now()) {
+    const previous = this.data.analytics.currentSession;
+    if (previous) this.endSession(previous.lastSeenTimestamp || previous.startTimestamp, false);
+    const date = new Date(timestamp);
+    const dateKey = [date.getFullYear(), String(date.getMonth()+1).padStart(2,'0'), String(date.getDate()).padStart(2,'0')].join('-');
     this.data.analytics.currentSession = {
-      date: this._today(),
-      startTimestamp: Date.now(),
+      date: dateKey,
+      startTimestamp: timestamp,
+      lastSeenTimestamp: timestamp,
       endTimestamp: null,
       modeTime: { companion: 0 },
       interactions: 0,
@@ -228,10 +254,11 @@ class GrowthManager {
     this.save();
   }
 
-  endSession() {
+  endSession(timestamp = Date.now(), splitDay = true) {
+    if (splitDay) this.ensureDay();
     const s = this.data.analytics.currentSession;
     if (!s) return;
-    s.endTimestamp = Date.now();
+    s.endTimestamp = Math.max(s.startTimestamp, timestamp);
     this.data.analytics.sessions.push(s);
     // Keep last 30 sessions
     if (this.data.analytics.sessions.length > 30) {
@@ -243,8 +270,9 @@ class GrowthManager {
 
   recordModeTime(mode, durationMs) {
     const s = this.data.analytics.currentSession;
-    if (!s || !s.modeTime[mode]) return;
-    s.modeTime[mode] += durationMs;
+    if (!s || !Number.isFinite(durationMs) || durationMs < 0) return;
+    s.modeTime[mode] = (s.modeTime[mode] || 0) + durationMs;
+    s.lastSeenTimestamp = Date.now();
   }
 
   recordAnalyticInteraction() {
@@ -263,6 +291,7 @@ class GrowthManager {
   }
 
   getSessionStats() {
+    this.ensureDay();
     const current = this.data.analytics.currentSession;
     const today = this._today();
 
@@ -283,23 +312,20 @@ class GrowthManager {
     let totalAccepted = 0;
     let totalIgnored = 0;
     let totalCompanion = 0;
-    let sessionStart = Infinity;
-    let sessionEnd = 0;
+    let durationMs = 0;
 
     for (const s of allToday) {
       totalInteractions += s.interactions;
       totalAccepted += s.remindersAccepted;
       totalIgnored += s.remindersIgnored;
       totalCompanion += (s.modeTime.companion || 0);
-      if (s.startTimestamp < sessionStart) sessionStart = s.startTimestamp;
-      const end = s.endTimestamp || Date.now();
-      if (end > sessionEnd) sessionEnd = end;
+      const end = s.endTimestamp ?? Date.now();
+      durationMs += Math.max(0, end - s.startTimestamp);
     }
 
     const totalReminders = totalAccepted + totalIgnored;
     const responseRate = totalReminders > 0 ? Math.round((totalAccepted / totalReminders) * 100) + '%' : '--';
 
-    const durationMs = sessionEnd - sessionStart;
     const hours = Math.floor(durationMs / 3600000);
     const mins = Math.floor((durationMs % 3600000) / 60000);
     const sessionTime = hours > 0 ? hours + 'h ' + mins + 'm' : mins + 'm';

@@ -38,6 +38,7 @@
   // ========== HORIZONTAL WALK (original) ==========
 
   proto.walkTo = function (targetX, onArrive) {
+    targetX = Math.max(this.minX, Math.min(targetX, this.maxX));
     this.setState('walking');
     var effectiveSpeed = this._getEffectiveSpeed();
     var distance = Math.abs(targetX - this.x);
@@ -58,6 +59,8 @@
   // ========== 2D WALK ==========
 
   proto.walkToPoint = function (targetX, targetY, onArrive) {
+    targetX = Math.max(this.minX, Math.min(targetX, this.maxX));
+    targetY = Math.max(this.minY, Math.min(targetY, this.maxY));
     this.setState('walking');
     var effectiveSpeed = this._getEffectiveSpeed();
     var dx = Math.abs(targetX - this.x);
@@ -83,6 +86,7 @@
   // ========== JUMP TO Y ==========
 
   proto.jumpToY = function (targetY, onArrive) {
+    targetY = Math.max(this.minY, Math.min(targetY, this.maxY));
     var dy = Math.abs(targetY - this.y);
     var duration = Math.max(dy / (this.verticalSpeed * 4), 300);
     // Brief jump arc

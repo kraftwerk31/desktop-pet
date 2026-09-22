@@ -1,5 +1,22 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage, powerMonitor } = require('electron');
 const path = require('path');
+const fs = require('fs');
+let selectedDisplay = null;
+let preferencesLoaded = false;
+function savePreferences() {
+  fs.writeFileSync(path.join(app.getPath('userData'), 'preferences.json'), JSON.stringify({ mode: currentMode, displayId: selectedDisplay }));
+}
+function displayState() {
+  return { mode: currentMode, displayId: selectedDisplay, autoStart: app.getLoginItemSettings({ path: process.execPath }).openAtLogin, displays: screen.getAllDisplays().map((d, i) => ({ id: d.id, label: d.label || ('显示器 ' + (i + 1)) })) };
+}
+function placeOnDisplay() {
+  const display = screen.getAllDisplays().find(d => d.id === selectedDisplay) || screen.getPrimaryDisplay();
+  selectedDisplay = display.id;
+  if (mainWindow) mainWindow.setBounds(display.workArea);
+}
+
+
+
 
 let mainWindow = null;
 let tray = null;
@@ -124,24 +141,9 @@ function createTrayIcon() {
 }
 
 function createPetWindow() {
-  // Compute bounds that cover all displays
-  const displays = screen.getAllDisplays();
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const d of displays) {
-    const b = d.bounds;
-    minX = Math.min(minX, b.x);
-    minY = Math.min(minY, b.y);
-    maxX = Math.max(maxX, b.x + b.width);
-    maxY = Math.max(maxY, b.y + b.height);
-  }
-  const totalWidth = maxX - minX;
-  const totalHeight = maxY - minY;
-
+  const area = screen.getPrimaryDisplay().workArea;
   mainWindow = new BrowserWindow({
-    width: totalWidth,
-    height: totalHeight,
-    x: minX,
-    y: minY,
+    ...area,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
@@ -215,8 +217,10 @@ function updateTray() {
 }
 
 function setMode(mode) {
+  if (!['companion', 'reminder'].includes(mode)) return;
   currentMode = mode;
   if (mainWindow) mainWindow.webContents.send('switch-mode', mode);
+  savePreferences();
   updateTray();
 }
 
@@ -227,6 +231,28 @@ function openSettings() {
 }
 
 // --- IPC ---
+ipcMain.handle('initialize-settings', (_event, legacy) => {
+  if (!preferencesLoaded) {
+    if (legacy && ['companion', 'reminder'].includes(legacy.mode)) currentMode = legacy.mode;
+    preferencesLoaded = true;
+  }
+  placeOnDisplay();
+  savePreferences();
+  updateTray();
+  return displayState();
+});
+ipcMain.handle('set-mode', (_event, mode) => { setMode(mode); return currentMode; });
+ipcMain.handle('select-display', (_event, id) => {
+  if (screen.getAllDisplays().some(d => d.id === id)) selectedDisplay = id;
+  placeOnDisplay(); savePreferences(); return displayState();
+});
+ipcMain.handle('auto-start', (_event, enabled) => {
+  if (typeof enabled === 'boolean') app.setLoginItemSettings({ openAtLogin: enabled, path: process.execPath });
+  return app.getLoginItemSettings({ path: process.execPath }).openAtLogin;
+});
+
+
+
 
 ipcMain.on('set-ignore-mouse-events', (_event, ignore) => {
   if (mainWindow) {
@@ -268,7 +294,22 @@ ipcMain.on('quit-app', () => {
 // --- App Lifecycle ---
 
 app.whenReady().then(() => {
+  try {
+    const saved = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'preferences.json'), 'utf8'));
+    if (['companion', 'reminder'].includes(saved.mode)) { currentMode = saved.mode; preferencesLoaded = true; }
+    selectedDisplay = saved.displayId;
+  } catch { /* First launch or invalid preferences: safe defaults. */ }
   createPetWindow();
+  placeOnDisplay();
+  for (const event of ['display-added', 'display-removed', 'display-metrics-changed']) {
+    screen.on(event, () => {
+      placeOnDisplay(); savePreferences();
+      if (mainWindow) mainWindow.webContents.send('displays-changed', displayState());
+    });
+  }
+  powerMonitor.on('suspend', () => mainWindow?.webContents.send('system-suspend'));
+  powerMonitor.on('resume', () => mainWindow?.webContents.send('system-resume'));
+
 
   tray = new Tray(createTrayIcon());
   updateTray();

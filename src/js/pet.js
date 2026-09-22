@@ -10,7 +10,7 @@ function pickRandom(arr) {
 }
 
 class PetEngine {
-  constructor(container, character) {
+  constructor(container, character, options = {}) {
     this.container = container;
     this.character = character;
     this.screenWidth = window.innerWidth;
@@ -45,9 +45,14 @@ class PetEngine {
     this._pendingDragY = 0;
 
     // Mode: companion | reminder
-    this.mode = 'companion';
+    this.mode = options.mode === 'reminder' ? 'reminder' : 'companion';
     this.isPaused = false;
     this.isPoppedIn = false;
+    this.activeReminder = null; this._pendingReminders = [];
+    this.reminderEnabled = options.reminderEnabled || {};
+    this.quietUntil = Number(options.quietUntil) || 0;
+    this.positionLocked = !!options.positionLocked;
+    this.petScale = Math.max(0.75, Math.min(1.75, Number(options.petScale) || 1));
 
     // Health reminder intervals (ms)
     this.breakInterval = 45 * 60 * 1000;   // 45 min default (combined rest + stand)
@@ -101,15 +106,17 @@ class PetEngine {
     this._typeInterval = null;
 
     this.bindEvents();
+    this.setSize(this.petScale);
+    if (options.petPosition && this.positionLocked) { this.x = Number(options.petPosition.x) || this.x; this.y = Number(options.petPosition.y) || this.y; this._clampPosition(); }
 
     // Preload sprites then start
-    this.sprite.preloadAll().then(() => {
+    this.ready = this.sprite.preloadAll().then(() => {
       this._spritesReady = true;
 
-      if (!this.growth.isIntroComplete()) {
+      if (!this.growth.isIntroComplete() && this.mode === 'companion' && !this.isQuiet()) {
         this._playIntroSequence();
       } else {
-        this.switchMode('companion');
+        this.switchMode(this.mode);
         if (this.growth.isNewDay()) {
           this._setTimer('timeGreeting', () => { this._showMilestoneOrGreeting(); }, 2000);
         } else {
@@ -117,6 +124,68 @@ class PetEngine {
         }
       }
     });
+  }
+
+
+  isQuiet() { return this.quietUntil > Date.now(); }
+
+  setQuiet(minutes) {
+    this.quietUntil = minutes > 0 ? Date.now() + minutes * 60000 : 0;
+    this._pendingReminders = [];
+    this._reminderDue = {};
+    this.activeReminder = null;
+    this._reminderActions?.classList.add('hidden');
+    this.switchMode(this.mode);
+  }
+
+
+  _positionBubble() {
+    if (!this.bubble) return;
+    const rect = this.container.getBoundingClientRect();
+    const width = Math.min(320, this.screenWidth - 24);
+    const left = Math.max(12, Math.min(rect.left + rect.width / 2 - width / 2, this.screenWidth - width - 12));
+    const height = this.bubble.offsetHeight || 60;
+    const top = rect.top - height - 16 >= 12 ? rect.top - height - 16 : rect.bottom + 12;
+    this.bubble.style.width = width + 'px';
+    this.bubble.style.left = left + 'px';
+    this.bubble.style.top = Math.max(12, Math.min(top, this.screenHeight - height - 12)) + 'px';
+    if (this._reminderActions) {
+      this._reminderActions.style.left = Math.max(8, Math.min(rect.left - 100, this.screenWidth - (this._reminderActions.offsetWidth || 300) - 8)) + 'px';
+      this._reminderActions.style.top = Math.max(8, Math.min(rect.bottom + 8, this.screenHeight - (this._reminderActions.offsetHeight || 42) - 8)) + 'px';
+    }
+  }
+
+  _trackBubble() {
+    if (this._bubbleFrame) return;
+    const frame = () => {
+      this._bubbleFrame = null;
+      if (!this.bubble.classList.contains('show')) return;
+      this._positionBubble();
+      this._bubbleFrame = requestAnimationFrame(frame);
+    };
+    this._bubbleFrame = requestAnimationFrame(frame);
+  }
+
+  setSize(scale) {
+    this.petScale = Math.max(0.75, Math.min(1.75, Number(scale) || 1));
+    this.petWidth = Math.round(160 * this.petScale);
+    this.petHeight = Math.round(160 * this.petScale);
+    this.container.style.setProperty('--pet-size', this.petWidth + 'px');
+    this._clampPosition();
+  }
+
+  _clampPosition() {
+    this.screenWidth = window.innerWidth; this.screenHeight = window.innerHeight;
+    this.minX = 10; this.minY = 10;
+    this.maxX = Math.max(10, this.screenWidth - (this.petWidth || 160) - 10);
+    this.maxY = Math.max(10, this.screenHeight - (this.petHeight || 160) - 32);
+    this.x = Math.max(this.minX, Math.min(this.x, this.maxX));
+    this.y = Math.max(this.minY, Math.min(this.y, this.maxY));
+    if (this.mode === 'companion' || this.isPoppedIn) {
+      this.container.style.transition = '';
+      this.container.style.left = this.x + 'px'; this.container.style.top = this.y + 'px'; this.container.style.bottom = 'auto';
+    }
+    this._positionBubble();
   }
 
   // ========== TIMER HELPERS ==========
@@ -127,6 +196,7 @@ class PetEngine {
   }
 
   _setTimer(key, fn, delay) {
+    if (['state', 'reaction', 'expressionReturn'].includes(key) && this._expressionUntil) delay = Math.max(delay, this._expressionUntil - Date.now());
     clearTimeout(this._timers[key]);
     this._timers[key] = setTimeout(fn, delay);
   }
@@ -148,7 +218,7 @@ class PetEngine {
   // ========== GROWTH SYSTEM ==========
 
   _showMilestoneOrGreeting() {
-    if (this.mode !== 'companion') return;
+    if (this.mode !== 'companion' || this.isQuiet() || this.isPaused || this.activeReminder) return;
 
     // 1. Check milestones first
     var milestones = this.growth.checkMilestones();
@@ -191,6 +261,9 @@ class PetEngine {
   setPersonality(id) {
     if (!PERSONALITIES[id] || this.personality === id) return;
     this.personality = id;
+    this.container.classList.remove('personality-clingy', 'personality-tsundere', 'personality-energetic', 'personality-dramatic');
+    this.container.classList.add('personality-' + id);
+    if (this.activeReminder) return;
     // Clear any pending delayed bubble
     clearTimeout(this._bubbleDelayTimer);
     this._bubbleDelayTimer = null;
@@ -218,7 +291,7 @@ class PetEngine {
   }
 
   _showTimeGreeting() {
-    if (this.mode !== 'companion') return;
+    if (this.mode !== 'companion' || this.isQuiet() || this.isPaused || this.activeReminder) return;
     var texts = this._getTexts();
     var greetMap = {
       morning: texts.morningGreet,
@@ -254,23 +327,12 @@ class PetEngine {
       }
     }
 
-    // Long work session (2 hours)
-    if (!this._hasShownLongWork && (now - this._workStartTime > 2 * 60 * 60 * 1000)) {
-      this._hasShownLongWork = true;
-      if (this.mode === 'companion') {
-        this.walkTo(this.screenWidth * 0.45, () => {
-          this.setState('reminding');
-          this.showBubble(pickRandom(this._getTexts().longWork));
-          this._setTimer('state', () => { this._recordReminderIgnore(); this.dismissReminder(); }, 10000);
-        });
-      }
-    }
   }
 
   // ========== MOUSE PROXIMITY ==========
 
   _updateProximity() {
-    if (this.mode !== 'companion' || this.isDragging) return;
+    if (this.mode !== 'companion' || this.isDragging || this.isPaused || this.isQuiet() || this.activeReminder) return;
 
     var rect = this.container.getBoundingClientRect();
     var catCenterX = rect.left + rect.width / 2;
@@ -297,7 +359,8 @@ class PetEngine {
 
   _startSeekAttention() {
     this._clearTimer('seek');
-    if (this.mode !== 'companion' || this.isPaused) return;
+    if (this.positionLocked) return;
+    if (this.mode !== 'companion' || this.isPaused || this.isQuiet() || this.activeReminder) return;
 
     var behavior = this._getBehavior();
     var checkInterval = (behavior.seekCheckInterval || 10) * 60 * 1000;
@@ -307,7 +370,8 @@ class PetEngine {
     if (this.growth.getMoodLevel() === 'low') checkInterval = Math.floor(checkInterval / 2);
 
     this._setTimer('seek', () => {
-      if (this.mode !== 'companion' || this.isPaused) return;
+      if (this.positionLocked) return;
+      if (this.mode !== 'companion' || this.isPaused || this.isQuiet() || this.activeReminder) return;
       if (Date.now() - this._lastInteractionTime > threshold) {
         var targetX = Math.max(this.minX, Math.min(this._mouseX - 40, this.maxX));
         this.walkTo(targetX, () => {
@@ -335,25 +399,41 @@ class PetEngine {
   // ========== MODE SWITCHING ==========
 
   switchMode(mode) {
+    if (!['companion', 'reminder'].includes(mode)) return;
+    if (this._introPhase) { this._introPhase = null; this.growth.completeIntro(); this.container.classList.remove('intro-hint'); }
+    if (this.activeReminder) {
+      this._pendingReminders.push(...this.activeReminder.types);
+      this.activeReminder = null;
+      this._reminderActions?.classList.add('hidden');
+    }
+    this.container.style.transition = '';
     this.mode = mode;
+    this.container.classList.remove('personality-clingy', 'personality-tsundere', 'personality-energetic', 'personality-dramatic');
+    this.container.classList.add('personality-' + this.personality);
     this._clearAllTimers();
     this.isPoppedIn = false;
     this.hideBubble();
 
+    if (mode === 'companion') this._clampPosition();
+    if (this.isPaused || this.isQuiet()) {
+      this.container.style.opacity = mode === 'companion' ? '1' : '0';
+      this.container.style.pointerEvents = mode === 'companion' ? 'auto' : 'none';
+      this.setState('sleeping');
+      return;
+    }
+
     // Restart timers that persist across modes
     this._startMoodCheck();
     this._startAnalyticsTimer();
-
-    // Ensure personality visual class is applied
-    this.container.classList.remove('personality-clingy', 'personality-tsundere', 'personality-energetic', 'personality-dramatic');
-    this.container.classList.add('personality-' + this.personality);
+    this._setTimer('reminderQueue', () => this._flushReminders(), 800);
 
     switch (mode) {
       case 'companion':
         this.container.style.opacity = '1';
         this.container.style.pointerEvents = 'auto';
-        this.container.style.bottom = '32px';
-        this.container.style.top = '';
+        this.container.style.bottom = this.positionLocked ? 'auto' : '32px';
+        this.container.style.top = this.positionLocked ? this.y + 'px' : '';
+        if (!this.positionLocked) this.y = this.maxY;
         this.container.style.left = this.x + 'px';
         this.setState('idle');
         this.scheduleNextAction();
@@ -374,14 +454,16 @@ class PetEngine {
   // ========== STATE ==========
 
   setState(newState) {
-    if (this.state === newState) return;
+    if (this.state === newState) { if (this._spritesReady) this.sprite.play(newState); return; }
     var wasSleeping = this.state === 'sleeping';
     this.state = newState;
+    this._stateEpoch = (this._stateEpoch || 0) + 1;
+    this._expressionUntil = ['happy', 'annoyed', 'surprised'].includes(newState) && this.sprite ? Date.now() + this.sprite.duration(newState) : 0;
 
     // Map internal states to sprite states
     var spriteState = newState;
     if (newState === 'stopping') spriteState = 'idle';
-    if (newState === 'reminding') spriteState = 'remind';
+    if (newState === 'reminding') spriteState = 'reminding';
     if (newState === 'sitting') spriteState = 'sit';
 
     if (this._spritesReady) {
@@ -412,7 +494,7 @@ class PetEngine {
   // ========== DRAG (companion only) ==========
 
   startDrag(e) {
-    if (this.mode !== 'companion') return;
+    if (this.mode !== 'companion' || this.activeReminder) return;
     this.isDragging = true;
     this.dragMoved = false;
     var rect = this.container.getBoundingClientRect();
@@ -428,6 +510,8 @@ class PetEngine {
     var dy = e.clientY - this.dragStartY;
     if (!this.dragMoved && Math.abs(dx) + Math.abs(dy) > 5) {
       this.dragMoved = true;
+      this._clearTimer('expressionReturn'); this._clearTimer('reaction');
+      this.setState('drag');
       this._clearTimer('state');
       this._clearTimer('blink');
       this.container.style.transition = '';
@@ -435,8 +519,8 @@ class PetEngine {
       this.character.style.transition = 'none';
     }
     if (!this.dragMoved) return;
-    var clampedX = Math.max(10, Math.min(e.clientX - this.dragOffsetX, this.screenWidth - 100));
-    var clampedY = Math.max(10, Math.min(e.clientY - this.dragOffsetY, this.screenHeight - 110));
+    var clampedX = Math.max(10, Math.min(e.clientX - this.dragOffsetX, this.screenWidth - this.petWidth - 10));
+    var clampedY = Math.max(10, Math.min(e.clientY - this.dragOffsetY, this.screenHeight - this.petHeight - 10));
     this._pendingDragX = clampedX;
     this._pendingDragY = clampedY;
     if (!this._dragRaf) {
@@ -445,6 +529,7 @@ class PetEngine {
         this.container.style.top = this._pendingDragY + 'px';
         this.container.style.bottom = 'auto';
         this.x = this._pendingDragX;
+        this.y = this._pendingDragY;
         this._dragRaf = null;
       });
     }
@@ -464,6 +549,7 @@ class PetEngine {
       this.character.style.cursor = 'grab';
       this.character.style.transition = 'transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
       this.setState('idle');
+      if (this.isQuiet() || this.isPaused) { this.setState('sleeping'); return; }
       this.showBubble(this._getTexts().dropReaction, true);
       this._setTimer('state', () => {
         this.hideBubble();
@@ -475,12 +561,12 @@ class PetEngine {
   // ========== COMPANION MODE — ACTION SCHEDULER ==========
 
   scheduleNextAction() {
-    if (this.mode !== 'companion' || this.isPaused) return;
+    if (this.mode !== 'companion' || this.isPaused || this.isQuiet() || this.activeReminder) return;
     var intervals = [3000, 5000, 7000, 11000];
     var delay = intervals[Math.floor(Math.random() * intervals.length)];
     this._clearTimer('state');
     this._setTimer('state', () => {
-      if (this.isPaused || this.mode !== 'companion') return;
+      if (this.isPaused || this.mode !== 'companion' || this.isQuiet() || this.activeReminder) return;
 
       this._checkTimeChange();
 
@@ -553,6 +639,7 @@ class PetEngine {
       var sEnd = wEnd + sit;
       var lEnd = sEnd + look;
 
+      if (this.positionLocked && r < wEnd) { this.setState('sitting'); this.scheduleNextAction(); return; }
       if (r < wEnd) {
         this.wander();
       } else if (r < sEnd) {
@@ -617,6 +704,8 @@ class PetEngine {
 
   _applyBubble(text) {
     if (!this.bubble) return;
+    this._positionBubble();
+    this._trackBubble();
     // Clear any ongoing typewriter
     clearInterval(this._typeInterval);
     this._typeInterval = null;
@@ -630,6 +719,7 @@ class PetEngine {
       this._typeInterval = setInterval(function () {
         if (i < text.length) {
           self.bubble.textContent += text[i];
+          self._positionBubble();
           i++;
         } else {
           clearInterval(self._typeInterval);
@@ -640,9 +730,13 @@ class PetEngine {
       this.bubble.textContent = text;
       this.bubble.classList.add('show');
     }
+    this._positionBubble();
   }
 
-  hideBubble() {
+  hideBubble(force = false) {
+    if (this.activeReminder && !force) return;
+    if (this._bubbleFrame) cancelAnimationFrame(this._bubbleFrame);
+    this._bubbleFrame = null;
     clearTimeout(this._bubbleDelayTimer);
     this._bubbleDelayTimer = null;
     clearInterval(this._typeInterval);
@@ -696,10 +790,10 @@ class PetEngine {
       });
     }
 
-    this.character.addEventListener('mouseenter', () => {
+    this.container.addEventListener('mouseenter', () => {
       window.petAPI.setIgnoreMouseEvents(false);
     });
-    this.character.addEventListener('mouseleave', () => {
+    this.container.addEventListener('mouseleave', () => {
       window.petAPI.setIgnoreMouseEvents(true);
     });
 
@@ -707,17 +801,7 @@ class PetEngine {
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
-        var oldX = this.x;
-        this.screenWidth = window.innerWidth;
-        this.screenHeight = window.innerHeight;
-        this.minX = 70;
-        this.maxX = this.screenWidth - 70;
-        // Clamp position to new bounds
-        this.x = Math.max(this.minX, Math.min(oldX, this.maxX));
-        if (this.mode === 'companion' && !this.isDragging) {
-          this.container.style.transition = '';
-          this.container.style.left = this.x + 'px';
-        }
+        this._clampPosition();
       }, 150);
     });
 
@@ -726,26 +810,8 @@ class PetEngine {
       this.growth.endSession();
     });
 
-    window.petAPI.onTogglePause((paused) => {
-      this.isPaused = paused;
-      if (paused) {
-        this._clearAllTimers();
-        if (this.mode === 'companion') {
-          this.showBubble(pickRandom(this._getTexts().yawn));
-          this._setTimer('state', () => {
-            this.hideBubble();
-            this.setState('sleeping');
-          }, 1500);
-        }
-      } else {
-        this.switchMode(this.mode);
-      }
-    });
-
-    window.petAPI.onDismissReminder(() => {
-      this._recordReminderDismiss();
-      this.dismissReminder();
-    });
+    window.petAPI.onTogglePause((paused) => { this.isPaused = paused; this.switchMode(this.mode); });
+    window.petAPI.onDismissReminder(() => this.resolveReminder('skipped'));
 
     window.petAPI.onSwitchMode((mode) => {
       this.switchMode(mode);
@@ -786,7 +852,7 @@ class PetEngine {
 
   _startIdleAnimations() {
     this._clearTimer('idleAnim');
-    if (this.mode !== 'companion' || this.isPaused) return;
+    if (this.mode !== 'companion' || this.isPaused || this.isQuiet() || this.activeReminder) return;
     var delay = 4000 + Math.random() * 8000; // 4-12s between idle animations
     this._setTimer('idleAnim', () => {
       if (this.state === 'idle' || this.state === 'sitting') {
@@ -803,9 +869,10 @@ class PetEngine {
       var bias = behavior.exprBias || ['happy', 'surprised'];
       var chosen = bias[Math.floor(Math.random() * bias.length)];
       this.setState(chosen);
-      this._setTimer('idleAnim', () => {
-        this.setState(this.state === 'walking' ? 'walking' : 'idle');
-      }, 500);
+      const epoch = this._stateEpoch;
+      this._setTimer('expressionReturn', () => {
+        if (this._stateEpoch === epoch && !this.activeReminder) this.setState('idle');
+      }, this.sprite.duration(chosen));
       return;
     }
     // Wiggle as fallback micro-animation
@@ -820,6 +887,7 @@ class PetEngine {
   // ========== FAREWELL ==========
 
   _playFarewell() {
+    this.activeReminder = null; this._pendingReminders = []; this._reminderActions?.classList.add('hidden');
     this._clearAllTimers();
     this.setState('sitting');
     var texts = this._getTexts();
@@ -858,11 +926,12 @@ class PetEngine {
 
   _startAnalyticsTimer() {
     this._clearTimer('analytics');
+    this._analyticsLastTick = Date.now();
     this._setTimer('analytics', () => {
       try {
-        if (this.mode === 'companion') {
-          this.growth.recordModeTime(this.mode, 60000);
-        }
+        this.growth.ensureDay();
+        this.growth.recordModeTime(this.mode, Math.min(60000, Date.now() - (this._analyticsLastTick || Date.now())));
+        this._analyticsLastTick = Date.now();
         this.growth.save();
       } catch {
         // Ensure chain continues even on error
@@ -874,6 +943,7 @@ class PetEngine {
   // ========== STATS BUBBLE (tray "打卡") ==========
 
   _showStatsBubble() {
+    if (this.activeReminder || this.isPaused || this.isQuiet()) return;
     var stats = this.growth.getStats();
     var text = window.DesktopPetI18n
       ? window.DesktopPetI18n.statsBubble(stats)

@@ -470,6 +470,94 @@
     return value == null ? path : value;
   }
 
+  const upgradeText = {
+  "zh-CN": {
+    "actions": "处理提醒",
+    "accepted": "完成了",
+    "snoozed": "5 分钟后",
+    "skipped": "这次跳过",
+    "combined": "休息一下，起身活动，也记得喝点水。",
+    "display": "活动屏幕",
+    "screen": "显示器 {n}",
+    "locked": "固定位置",
+    "size": "猫咪大小",
+    "quietStart": "安静陪伴 1 小时",
+    "quietEnd": "结束安静陪伴",
+    "quietRemaining": "剩余 {n} 分钟，提醒与主动对话已暂停。",
+    "quietHelp": "安静时暂停提醒和主动对话，仍可拖动猫咪。",
+    "enabledBreak": "启用休息活动提醒",
+    "enabledWater": "启用喝水提醒",
+    "close": "关闭设置",
+    "error": "设置保存失败，请重试。",
+    "interval": "提醒间隔（分钟）",
+    "reminderHelp": "30 秒未处理会收起；点击猫咪不算完成。"
+  },
+  "en": {
+    "actions": "Reminder actions",
+    "accepted": "Done",
+    "snoozed": "In 5 minutes",
+    "skipped": "Skip this time",
+    "combined": "Take a break, stretch your legs, and have some water.",
+    "display": "Active display",
+    "screen": "Display {n}",
+    "locked": "Stay in place",
+    "size": "Pet size",
+    "quietStart": "Quiet company for 1 hour",
+    "quietEnd": "End quiet time",
+    "quietRemaining": "{n} minutes left. Reminders and unsolicited chatter are paused.",
+    "quietHelp": "Quiet time pauses reminders and chatter. You can still drag the cat.",
+    "enabledBreak": "Enable break reminders",
+    "enabledWater": "Enable water reminders",
+    "close": "Close settings",
+    "error": "Could not save settings. Please try again.",
+    "interval": "Reminder interval (minutes)",
+    "reminderHelp": "Closes after 30 seconds. Clicking the cat does not mark it done."
+  },
+  "ja": {
+    "actions": "通知への対応",
+    "accepted": "できた",
+    "snoozed": "5分後に",
+    "skipped": "今回はスキップ",
+    "combined": "少し休んで体を動かし、水分もとりましょう。",
+    "display": "表示する画面",
+    "screen": "ディスプレイ {n}",
+    "locked": "位置を固定",
+    "size": "猫の大きさ",
+    "quietStart": "1時間静かに過ごす",
+    "quietEnd": "静かな時間を終了",
+    "quietRemaining": "残り{n}分。通知と話しかけを停止しています。",
+    "quietHelp": "静かな時間は通知と話しかけを停止します。猫はドラッグできます。",
+    "enabledBreak": "休憩の通知を有効にする",
+    "enabledWater": "水分補給の通知を有効にする",
+    "close": "設定を閉じる",
+    "error": "設定を保存できませんでした。もう一度お試しください。",
+    "interval": "通知の間隔（分）",
+    "reminderHelp": "30秒後に閉じます。猫をクリックしても完了にはなりません。"
+  },
+  "es": {
+    "actions": "Acciones del recordatorio",
+    "accepted": "Hecho",
+    "snoozed": "En 5 minutos",
+    "skipped": "Omitir esta vez",
+    "combined": "Descansa un poco, estira las piernas y bebe agua.",
+    "display": "Pantalla activa",
+    "screen": "Pantalla {n}",
+    "locked": "Fijar posición",
+    "size": "Tamaño del gato",
+    "quietStart": "Compañía tranquila durante 1 hora",
+    "quietEnd": "Terminar el tiempo tranquilo",
+    "quietRemaining": "Quedan {n} minutos. Los recordatorios y mensajes están en pausa.",
+    "quietHelp": "Pausa los recordatorios y mensajes. Puedes seguir arrastrando al gato.",
+    "enabledBreak": "Activar recordatorios de descanso",
+    "enabledWater": "Activar recordatorios de agua",
+    "close": "Cerrar ajustes",
+    "error": "No se pudieron guardar los ajustes. Inténtalo de nuevo.",
+    "interval": "Intervalo del recordatorio (minutos)",
+    "reminderHelp": "Se cierra tras 30 segundos. Pulsar el gato no lo marca como hecho."
+  }
+};
+  Object.keys(upgradeText).forEach(lang => { UI[lang].upgrade = upgradeText[lang]; });
+
   function setLanguage(lang) {
     if (!UI[lang]) lang = 'zh-CN';
     saveLanguage(lang);

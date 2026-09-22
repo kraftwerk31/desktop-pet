@@ -2,7 +2,7 @@
  * Renderer process entry - wires pet engine with IPC + settings UI
  */
 
-(function () {
+(async function () {
   'use strict';
 
   // --- Settings persistence ---
@@ -98,7 +98,7 @@
     setText('#water-label', '💧 ' + i18n.t('waterReminder'));
     setText('#general-label', '⚙ ' + i18n.t('generalSettings'));
 
-    setText('.toggle-label', i18n.t('autoStart'));
+    setText('#auto-start-label', i18n.t('autoStart'));
     setText('#mode-desc', i18n.t('modeDesc.' + pet.mode));
     setText('#personality-desc', PERSONALITIES[pet.personality].desc);
     setText('#stat-bond-title', i18n.bondTitle(pet.growth.getBondLevel()));
@@ -111,30 +111,19 @@
     setText('.analytics-item:nth-child(3) .analytics-label', i18n.t('stats.reminders'));
     setText('.analytics-item:nth-child(4) .analytics-label', i18n.t('stats.interactions'));
     updateSliderLabels();
+    refreshUpgradeText();
   }
 
-  // --- Create Pet Engine ---
-  var pet = new PetEngine(container, character);
-
-  // --- Restore saved settings ---
+  // Restore settings before loading GIFs: preload completion must not reset the mode.
   var saved = loadSettings();
-  if (saved.language && i18n) i18n.setLanguage(saved.language);
+  var systemSettings;
+  try { systemSettings = await window.petAPI.initializeSettings(saved); saved.mode = systemSettings.mode; }
+  catch { document.getElementById('settings-status').textContent = i18n.t('upgrade.error'); }
+  if (saved.language) i18n.setLanguage(saved.language);
   if (languageSelect) languageSelect.value = i18n.getLanguage();
-  if (window.petAPI.setLanguage) window.petAPI.setLanguage(i18n.getLanguage());
-
-  // If saved settings exist but intro hasn't completed, skip intro
-  if (Object.keys(saved).length > 0 && !pet.growth.isIntroComplete()) {
-    pet.growth.completeIntro();
-    pet._clearTimer('intro1');
-    pet._clearTimer('intro2');
-    var restoreMode = saved.mode || 'companion';
-    pet.switchMode(restoreMode);
-    if (pet.growth.isNewDay()) {
-      pet._setTimer('timeGreeting', function () { pet._showMilestoneOrGreeting(); }, 2000);
-    } else {
-      pet._setTimer('timeGreeting', function () { pet._showTimeGreeting(); }, 2000);
-    }
-  }
+  window.petAPI.setLanguage(i18n.getLanguage());
+  var pet = new PetEngine(container, character, saved);
+  await pet.ready;
 
   if (saved.breakInterval != null && breakSlider) {
     breakSlider.value = saved.breakInterval;
@@ -152,7 +141,7 @@
       b.classList.toggle('active', b.dataset.mode === saved.mode);
     });
     if (modeDesc) modeDesc.textContent = i18n.t('modeDesc.' + saved.mode);
-    pet.setMode(saved.mode);
+    // PetEngine already started with the restored mode.
   }
 
   if (saved.personality && PERSONALITIES[saved.personality]) {
@@ -176,8 +165,7 @@
     }
     autoStartToggle.addEventListener('change', function () {
       var enabled = autoStartToggle.checked;
-      window.petAPI.setAutoStart(enabled);
-      saveSettings({ autoStart: enabled });
+      window.petAPI.autoStart(enabled).then(actual => { autoStartToggle.checked = actual; saveSettings({ autoStart: actual }); }).catch(() => { autoStartToggle.checked = !enabled; reportError(); });
     });
   }
 
@@ -218,6 +206,7 @@
 
   function closeSettings() {
     settingsPanel.classList.add('hidden');
+    window.petAPI.setIgnoreMouseEvents(true);
     window.petAPI.setFocusable(false);
     refreshLocalizedText();
     refreshStats();
@@ -281,8 +270,7 @@
       modeBtns.forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       if (modeDesc) modeDesc.textContent = i18n.t('modeDesc.' + mode);
-      pet.setMode(mode);
-      saveSettings({ mode: mode });
+      window.petAPI.setMode(mode).then(applyMode).catch(() => { applyMode(pet.mode); reportError(); });
     });
   });
 
@@ -334,6 +322,95 @@
     if (pet._showStatsBubble) pet._showStatsBubble();
     refreshStats();
   });
+
+  function reportError() { document.getElementById('settings-status').textContent = i18n.t('upgrade.error'); }
+  function applyMode(mode) {
+    modeBtns.forEach(button => button.classList.toggle('active', button.dataset.mode === mode));
+    modeDesc.textContent = i18n.t('modeDesc.' + mode);
+    saveSettings({ mode });
+    if (pet.mode !== mode) pet.setMode(mode);
+  }
+  window.petAPI.onSwitchMode(applyMode);
+
+  function renderDisplays(data) {
+    const select = document.getElementById('display-select');
+    select.replaceChildren();
+    data.displays.forEach((display, index) => {
+      const option = document.createElement('option');
+      option.value = display.id;
+      option.textContent = display.label && !/^显示器 /.test(display.label) ? display.label : i18n.t('upgrade.screen', { n: index + 1 });
+      select.appendChild(option);
+    });
+    select.value = data.displayId;
+  }
+  function refreshQuietText() {
+    document.getElementById('quiet-toggle').textContent = i18n.t('upgrade.' + (pet.isQuiet() ? 'quietEnd' : 'quietStart'));
+    document.getElementById('quiet-status').textContent = pet.isQuiet() ? i18n.t('upgrade.quietRemaining', { n: Math.ceil((pet.quietUntil - Date.now()) / 60000) }) : i18n.t('upgrade.quietHelp');
+  }
+  function refreshUpgradeText() {
+    const labels = { 'display-label':'display', 'position-lock-label':'locked', 'size-label':'size', 'reminder-help':'reminderHelp' };
+    Object.keys(labels).forEach(id => { document.getElementById(id).textContent = i18n.t('upgrade.' + labels[id]); });
+    document.getElementById('settings-close').setAttribute('aria-label', i18n.t('upgrade.close'));
+    const actions = document.getElementById('reminder-actions');
+    actions.setAttribute('aria-label', i18n.t('upgrade.actions'));
+    actions.querySelectorAll('button').forEach(button => { button.textContent = i18n.t('upgrade.' + button.dataset.reminderAction); });
+    document.querySelectorAll('.reminder-enable').forEach(input => { input.setAttribute('aria-label', i18n.t('upgrade.' + (input.dataset.reminderType === 'healthBreak' ? 'enabledBreak' : 'enabledWater'))); });
+    [breakSlider, waterSlider].forEach(input => input.setAttribute('aria-label', i18n.t('upgrade.interval')));
+    refreshQuietText();
+    if (systemSettings) renderDisplays(systemSettings);
+    pet._positionBubble();
+  }
+  window.petAPI.onDisplaysChanged(data => { systemSettings = data; renderDisplays(data); });
+  document.getElementById('display-select').addEventListener('change', async event => {
+    try { systemSettings = await window.petAPI.selectDisplay(Number(event.target.value)); renderDisplays(systemSettings); }
+    catch { reportError(); }
+  });
+  document.querySelectorAll('.reminder-enable').forEach(input => {
+    input.checked = pet.reminderEnabled[input.dataset.reminderType] !== false;
+    input.addEventListener('change', () => {
+      pet.setReminderEnabled(input.dataset.reminderType, input.checked);
+      saveSettings({ reminderEnabled: pet.reminderEnabled });
+    });
+  });
+  pet._reminderActions = document.getElementById('reminder-actions');
+  pet._reminderActions.addEventListener('click', event => {
+    const action = event.target.closest('[data-reminder-action]');
+    if (action) { event.stopPropagation(); pet.resolveReminder(action.dataset.reminderAction); refreshStats(); }
+  });
+  pet._reminderActions.addEventListener('mouseenter', () => window.petAPI.setIgnoreMouseEvents(false));
+  pet._reminderActions.addEventListener('mouseleave', () => window.petAPI.setIgnoreMouseEvents(true));
+  const lock = document.getElementById('position-lock');
+  lock.checked = pet.positionLocked;
+  function savePosition() { saveSettings({ positionLocked: pet.positionLocked, petPosition: { x: pet.x, y: pet.y } }); }
+  lock.addEventListener('change', () => {
+    pet.positionLocked = lock.checked;
+    if (pet.positionLocked && !pet.activeReminder) {
+      const rect = container.getBoundingClientRect(); pet.x = rect.left; pet.y = rect.top;
+      container.style.transition = ''; container.style.left = pet.x + 'px'; container.style.top = pet.y + 'px'; container.style.bottom = 'auto';
+      pet._clearTimer('state'); pet.setState(pet.isQuiet() || pet.isPaused ? 'sleeping' : 'sitting'); pet.scheduleNextAction();
+    }
+    savePosition();
+  });
+  window.addEventListener('mouseup', () => { if (pet.positionLocked) savePosition(); });
+  const size = document.getElementById('pet-size');
+  size.value = pet.petScale * 100;
+  document.getElementById('size-value').textContent = size.value + '%';
+  size.addEventListener('input', () => {
+    pet.setSize(Number(size.value) / 100); document.getElementById('size-value').textContent = size.value + '%';
+    saveSettings({ petScale: pet.petScale }); if (pet.positionLocked) savePosition();
+  });
+  document.getElementById('quiet-toggle').addEventListener('click', () => {
+    pet.setQuiet(pet.isQuiet() ? 0 : 60); saveSettings({ quietUntil: pet.quietUntil }); refreshUpgradeText();
+  });
+  const clock = setInterval(() => {
+    if (pet.quietUntil && !pet.isQuiet()) { pet.setQuiet(0); saveSettings({ quietUntil: 0 }); }
+    if (!settingsPanel.classList.contains('hidden')) { refreshStats(); refreshQuietText(); }
+  }, 1000);
+  window.addEventListener('beforeunload', () => clearInterval(clock));
+  window.addEventListener('keydown', event => { if (event.key === 'Escape') closeSettings(); });
+  window.petAPI.onSuspend(() => { pet.growth.endSession(); pet._clearAllTimers(); pet.hideBubble(true); pet._reminderActions.classList.add('hidden'); });
+  window.petAPI.onResume(() => { pet.growth.startSession(); pet.growth.ensureDay(); pet._reminderDue = {}; pet.switchMode(pet.mode); refreshUpgradeText(); });
+  refreshUpgradeText();
 
   // --- Expose for debugging ---
   window.pet = pet;

@@ -76,7 +76,7 @@
 
       // Run away to the right
       this._introPhase = 'running_away';
-      var rightX = this.screenWidth - 120;
+      var rightX = this.maxX;
       this.walkTo(rightX, () => {
         // Peek back
         this._introPhase = 'peeking_back';

@@ -75,27 +75,8 @@
 
     this._recordClick();
 
-    // Reminder mode: dismiss pop-in on click
-    if (this.mode === 'reminder' && this.isPoppedIn) {
-      this._clearTimer('state');
-      this._recordReminderDismiss();
-      this.setState('happy');
-      var texts = this._getTexts();
-      this.showBubble(pickRandom(texts.encourage), true);
-      this._setTimer('state', () => {
-        this.hideBubble();
-        this.setState('idle');
-        this._popOutAfterReminder();
-      }, 800);
-      return;
-    }
-
-    if (this.state === 'reminding') {
-      this._recordReminderDismiss();
-      this.dismissReminder();
-      return;
-    }
-
+    if (this.activeReminder || this.isQuiet() || this.isPaused) return;
+    if (this.mode === 'reminder' && this.isPoppedIn) { this._dismissReminderPopOut(); return; }
     this._clearTimer('state');
     this._clearTimer('reaction');
 

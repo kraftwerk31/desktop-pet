@@ -1,12 +1,15 @@
 {
   "name": "desktop-pet",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "住在你电脑里的小宠物，帮你守护注意力",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win",
-    "build:dir": "electron-builder --win --dir"
+    "build:dir": "electron-builder --win --dir",
+    "test": "node --test tests/*.test.js",
+    "test:ui": "electron tests/electron-smoke.cjs",
+    "build:local": "electron-builder --win -c.win.signAndEditExecutable=false"
   },
   "keywords": [
     "desktop-pet",
@@ -35,7 +38,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icon.ico"
@@ -46,6 +51,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Desktop Pet"
-    }
+    },
+    "artifactName": "Desktop-Pet-GIF-Setup-${version}.${ext}"
   }
 }

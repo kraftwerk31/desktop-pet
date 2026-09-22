@@ -715,3 +715,35 @@ html, body {
   60% { transform: scaleX(0.97) scaleY(1.03); }
   100% { transform: scaleX(1) scaleY(1); }
 }
+
+/* Upgrade: readable edge-safe balloons and explicit reminder controls. */
+#pet-container { filter: none; }
+#speech-bubble, #speech-bubble.show {
+  position: fixed; bottom: auto; margin: 0; transform: none;
+  white-space: normal; overflow-wrap: anywhere; box-sizing: border-box;
+  border-radius: 18px; text-align: center; animation: none;
+  max-height: calc(100vh - 24px); overflow: auto;
+}
+#speech-bubble::before, #speech-bubble::after { display: none; }
+.reminder-actions { position: fixed; display: flex; gap: 6px; padding: 6px; background: var(--m-bg-warm); border: 1px solid var(--m-border-medium); border-radius: 12px; z-index: 20; pointer-events: auto; }
+.reminder-actions.hidden { display: none; }
+.reminder-actions button, .quiet-btn { border: 1px solid var(--m-border-medium); background: var(--m-bg-card); color: var(--m-text-primary); border-radius: 8px; padding: 8px 10px; cursor: pointer; font: inherit; font-size: 12px; }
+.reminder-actions button:first-child { background: var(--m-accent); color: #30271e; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--m-orange-dark); outline-offset: 3px; }
+.settings-panel { max-width: calc(100vw - 24px); max-height: calc(100vh - 32px); bottom: 16px; right: 12px; }
+.settings-body { max-height: calc(100vh - 110px); overflow-y: auto; }
+#display-select { width: 100%; padding: 8px; border: 1px solid var(--m-border-medium); border-radius: 8px; color: var(--m-text-primary); background: var(--m-bg-warm); }
+.quiet-btn { width: 100%; margin-top: 12px; }
+.reminder-enable { accent-color: var(--m-orange-dark); flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+
+/* GIFs use a square stage with a common baseline, independent of source aspect. */
+#pet-character { width: var(--pet-size, 160px); height: var(--pet-size, 160px); }
+#pet-sprite { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; transform-origin: center bottom; transform: translateY(var(--action-y, 0px)) scaleX(var(--facing, 1)) scale(var(--action-scale, 1)); }
+#position-lock-label { font-size: 13px; color: var(--m-text-primary); }
+#size-label { margin-top: 14px; }
+#size-value { min-width: 42px; font-size: 12px; color: var(--m-text-secondary); }
+.reminder-actions { max-width: calc(100vw - 16px); flex-wrap: wrap; }
+.reminder-actions button { min-height: 34px; }
+
+#settings-status:empty { display: none; }

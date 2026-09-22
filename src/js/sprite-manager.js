@@ -10,6 +10,15 @@ class SpriteManager {
     this.img = null;
 
     // State → file path mapping (subdirectory/same-name.gif)
+    this._aliases = { walking: 'walk', sleeping: 'sleep', sitting: 'sit', remind: 'reminding', stopping: 'idle' };
+    // Preserve source GIFs; anchor every action at its bottom center.
+    this._presentation = {
+      idle: { scale: 1, y: 0, duration: 1600 }, walk: { scale: 1, y: 0, duration: 1970 },
+      sit: { scale: 1, y: 0, duration: 3480 }, sleep: { scale: 1, y: 0, duration: 3000 },
+      happy: { scale: 1, y: 0, duration: 1600 }, reminding: { scale: 1, y: 0, duration: 1800 },
+      annoyed: { scale: 1, y: 0, duration: 4370 }, surprised: { scale: 1, y: 0, duration: 1650 },
+      drag: { scale: 1, y: 0, duration: 1760 },
+    };
     this._states = {
       idle:      'idle/idle.gif',
       walk:      'walk/walk.gif',
@@ -49,7 +58,7 @@ class SpriteManager {
       var candidates = [
         basePath + '/' + filepath,
         basePath + '/' + filepath.replace('.gif', '.png'),
-        basePath + '/' + filepath.replace('.gif', '.svg'),
+        basePath + '/' + filepath.split('/')[0] + '/1.svg',
       ];
       promises.push(this._loadWithFallback(state, candidates));
     }
@@ -108,6 +117,7 @@ class SpriteManager {
   // ========== PLAYBACK ==========
 
   play(state) {
+    state = this._aliases[state] || state;
     var resolvedState = state;
     if (!this._cache[state]) {
       resolvedState = this._states[state] ? state : 'idle';
@@ -119,6 +129,10 @@ class SpriteManager {
     this._currentState = resolvedState;
 
     if (!this.img) return;
+    const layout = this._presentation[resolvedState] || this._presentation.idle;
+    this.img.style.setProperty('--action-scale', layout.scale);
+    this.img.style.setProperty('--action-y', layout.y + 'px');
+    this.img.dataset.state = resolvedState;
 
     var cached = this._cache[resolvedState];
     if (!cached) return;
@@ -131,6 +145,8 @@ class SpriteManager {
     }
   }
 
+  duration(state) { return (this._presentation[this._aliases[state] || state] || this._presentation.idle).duration; }
+
   stop() {
     // GIF auto-loops, nothing to stop
   }
@@ -138,7 +154,7 @@ class SpriteManager {
   setFlip(left) {
     this._flipX = left;
     if (this.img) {
-      this.img.style.transform = left ? 'scaleX(-1)' : '';
+      this.img.style.setProperty('--facing', left ? '-1' : '1');
     }
   }
 

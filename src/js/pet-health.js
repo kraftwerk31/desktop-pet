@@ -1,87 +1,115 @@
-/**
- * Pet Health Reminder System - extends PetEngine.prototype
- * Health reminders: break (rest + stand up), drink water
- * Pop-in / pop-out for reminder mode
- */
-
+/** Reliable reminder queue and explicit user actions. */
 (function () {
   'use strict';
-
-  var proto = PetEngine.prototype;
-
-  // ========== HEALTH REMINDER LIFECYCLE ==========
-
+  const proto = PetEngine.prototype;
+  const kinds = {
+    healthBreak: { timer: 'breakReminder', interval: 'breakInterval', label: 'breakActivity' },
+    healthWater: { timer: 'waterReminder', interval: 'waterInterval', label: 'waterReminder' },
+  };
   proto.startHealthReminders = function () {
-    this._clearTimer('breakReminder');
-    this._clearTimer('waterReminder');
-    if (this.isPaused) return;
-
-    this._cycleHealthTimer('breakReminder', this.breakInterval, 'healthBreak');
-    this._cycleHealthTimer('waterReminder', this.waterInterval, 'healthWater');
+    for (const [type, spec] of Object.entries(kinds)) {
+      this._clearTimer(spec.timer);
+      if (!this.isPaused && !this.isQuiet() && this.reminderEnabled[type] !== false)
+        this._cycleHealthTimer(spec.timer, this[spec.interval], type);
+    }
   };
-
-  proto._cycleHealthTimer = function (key, interval, textKey) {
+  proto._cycleHealthTimer = function (key, interval, type) {
+    if (this.isPaused || this.isQuiet() || this.reminderEnabled[type] === false) return;
+    this._reminderDue = this._reminderDue || {};
+    if (!Number.isFinite(this._reminderDue[type])) this._reminderDue[type] = Date.now() + interval;
     this._setTimer(key, () => {
-      if (!this.isPaused) { this._showHealthReminder(textKey); }
-      this._cycleHealthTimer(key, interval, textKey);
-    }, interval);
+      this._reminderDue[type] = Date.now() + interval;
+      this._showHealthReminder(type);
+      this._cycleHealthTimer(key, interval, type);
+    }, Math.max(0, this._reminderDue[type] - Date.now()));
   };
-
-  proto._showHealthReminder = function (textKey) {
-    if (this.state === 'reminding' || this.state === 'sleeping') return;
-    var texts = this._getTexts();
-    var pool = texts[textKey];
-    if (!pool || pool.length === 0) return;
-
-    if (this.mode === 'reminder') {
-      // Reminder mode: pop in from right side
-      this._popInForReminder(() => {
-        this.showBubble(pickRandom(pool));
-        this._setTimer('state', () => {
-          this._recordReminderIgnore();
-          this._dismissReminderPopOut();
-        }, 10000);
-      });
-    } else {
-      // Companion mode: walk to center
-      var centerX = this.screenWidth * 0.45;
-      this._clearTimer('state');
-      this.walkTo(centerX, () => {
-        this.setState('reminding');
-        this.showBubble(pickRandom(pool));
-        this._setTimer('state', () => {
-          this._recordReminderIgnore();
-          this.dismissReminder();
-        }, 12000);
-      });
+  proto._showHealthReminder = function (type) {
+    if (!kinds[type] || this.isPaused || this.quietUntil > Date.now()) return;
+    this._pendingReminders = this._pendingReminders || [];
+    if (!this._pendingReminders.includes(type) && !this.activeReminder?.types.includes(type)) this._pendingReminders.push(type);
+    if (this.activeReminder) return;
+    this._setTimer('reminderQueue', () => this._flushReminders(), 300);
+  };
+  proto._flushReminders = function () {
+    if (this.activeReminder || !this._pendingReminders.length || this.isPaused || this.isQuiet()) return;
+    if (this.isDragging || this._introPhase || this._spritesReady === false) {
+      this._setTimer('reminderQueue', () => this._flushReminders(), 1000); return;
+    }
+    const types = this._pendingReminders.splice(0).filter(type => this.reminderEnabled[type] !== false);
+    if (!types.length) return;
+    this.hideBubble(true);
+    this.activeReminder = { types };
+    this._clearTimer('state'); this._clearTimer('reaction'); this._clearTimer('seek');
+    this.sprite?.setFlip(this._facingLeft);
+    const show = () => {
+      this.setState('reminding');
+      const text = types.length > 1 ? window.DesktopPetI18n.t('upgrade.combined') : pickRandom(this._getTexts()[types[0]]);
+      this.showBubble(text, true);
+      this._reminderActions?.classList.remove('hidden');
+      this._positionBubble();
+      this._setTimer('reminderTimeout', () => this.resolveReminder('skipped'), 30000);
+    };
+    if (this.mode === 'reminder') this._popInForReminder(show);
+    else {
+      // Show in place so reminders do not cross or obscure the user's work.
+      const rect = this.container.getBoundingClientRect();
+      this.container.style.transition = '';
+      this.x = rect.left; this.y = rect.top;
+      this.container.style.left = this.x + 'px'; this.container.style.top = this.y + 'px'; this.container.style.bottom = 'auto';
+      show();
     }
   };
-
-  proto.dismissReminder = function () {
-    if (this.state !== 'reminding') return;
-    this._clearTimer('state');
+  proto.resolveReminder = function (action) {
+    if (!this.activeReminder || !['accepted','snoozed','skipped'].includes(action)) return;
+    const types = this.activeReminder.types;
+    this.activeReminder = null;
+    this._clearTimer('reminderTimeout'); this._clearTimer('state');
+    this._reminderActions?.classList.add('hidden');
+    if (action === 'accepted') this._recordReminderDismiss();
+    else if (action === 'skipped') this._recordReminderIgnore();
+    if (action === 'snoozed') {
+      for (const type of types) {
+        const spec = kinds[type];
+        this._reminderDue = this._reminderDue || {};
+        this._reminderDue[type] = Date.now() + 5 * 60000;
+        this._cycleHealthTimer(spec.timer, this[spec.interval], type);
+      }
+    }
     this.hideBubble();
-    this.setState('happy');
-
-    var texts = this._getTexts();
-    if (this._consecutiveDismisses >= 2) {
-      this.showBubble(pickRandom(texts.encourage), true);
-    } else {
-      this.showBubble(texts.dismissed, true);
-    }
-
-    this._setTimer('state', () => {
-      this.hideBubble();
+    const finish = () => {
       this.setState('idle');
-      this.scheduleNextAction();
-    }, 1200);
+      this.scheduleNextAction(); this._startSeekAttention();
+      this._setTimer('reminderQueue', () => this._flushReminders(), 800);
+      window.petAPI.setIgnoreMouseEvents(true);
+    };
+    if (this.mode === 'reminder') this._popOutAfterReminder(finish); else finish();
   };
-
-  // ========== POP-IN / POP-OUT (reminder mode) ==========
-
+  proto.dismissReminder = function () { this.resolveReminder('skipped'); };
+  proto.setReminderEnabled = function (type, enabled) {
+    if (!kinds[type]) return;
+    this.reminderEnabled[type] = !!enabled;
+    this._pendingReminders = this._pendingReminders.filter(item => item !== type);
+    if (this.activeReminder?.types.includes(type)) this.resolveReminder('skipped');
+    const spec = kinds[type];
+    this._clearTimer(spec.timer);
+    this._reminderDue = this._reminderDue || {};
+    delete this._reminderDue[type];
+    if (enabled) this._cycleHealthTimer(spec.timer, this[spec.interval], type);
+  };
+  proto._setHealthInterval = function (type, minutes, min, max) {
+    if (!Number.isFinite(Number(minutes))) return;
+    const spec = kinds[type];
+    this[spec.interval] = Math.max(min, Math.min(max, Number(minutes))) * 60000;
+    this._clearTimer(spec.timer);
+    this._reminderDue = this._reminderDue || {};
+    this._reminderDue[type] = Date.now() + this[spec.interval];
+    this._cycleHealthTimer(spec.timer, this[spec.interval], type);
+  };
+  proto.setBreakInterval = function (m) { this._setHealthInterval('healthBreak', m, 15, 120); };
+  proto.setWaterInterval = function (m) { this._setHealthInterval('healthWater', m, 10, 90); };
   proto._popInForReminder = function (onComplete) {
     this.isPoppedIn = true;
-    var targetY = this.screenHeight * 0.45;
+    var targetY = Math.max(10, Math.min(this.screenHeight * 0.45, this.screenHeight - (this.petHeight || 160) - 64));
     this.container.style.transition = 'none';
     this.container.style.left = (this.screenWidth + 20) + 'px';
     this.container.style.top = targetY + 'px';
@@ -92,8 +120,9 @@
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        if (!this.isPoppedIn || this.mode !== 'reminder' || this.isPaused || this.isQuiet()) return;
         this.container.style.transition = 'left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        this.container.style.left = (this.screenWidth - 160) + 'px';
+        this.container.style.left = Math.max(10, this.screenWidth - (this.petWidth || 120) - 24) + 'px';
       });
     });
 
@@ -122,20 +151,6 @@
     this._clearTimer('state');
     this.hideBubble();
     this._popOutAfterReminder();
-  };
-
-  // ========== PUBLIC API ==========
-
-  proto.setBreakInterval = function (minutes) {
-    this.breakInterval = minutes * 60 * 1000;
-    this._clearTimer('breakReminder');
-    this._cycleHealthTimer('breakReminder', this.breakInterval, 'healthBreak');
-  };
-
-  proto.setWaterInterval = function (minutes) {
-    this.waterInterval = minutes * 60 * 1000;
-    this._clearTimer('waterReminder');
-    this._cycleHealthTimer('waterReminder', this.waterInterval, 'healthWater');
   };
 
 })();
